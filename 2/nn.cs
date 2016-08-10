@@ -97,6 +97,11 @@ public class Neuron {
 		return 1.0 / (1.0 + Math.Exp (-z));
 	}
 
+	public double sigmoidDerivative(double x){
+		double s = sigmoid (x);
+		return s * (1 - s);
+	}
+
 	public Neuron(double pBias){
 		this.bias = pBias;
 	}
@@ -138,6 +143,34 @@ public class NNetwork {
 			setWeights (layerIndex, i, weights [i]);
 	}
 
+	public double[] feedFordward(double[] inputs){
+		Int32 l = num_layers - 1;
+		Int32 i=0;
+		double[] layerOuput = inputs;
+
+		for (i = 0; i < l; i ++) {
+			layerOuput = this.feedFordward (layerOuput, i);
+		}
+
+		return layerOuput;
+	}
+
+	public double[] feedFordward(double[] inputs, Int32 layer){
+	
+		Neuron[] neurons = layers[layer];
+		Int32 l = neurons.Length;
+		Int32 i;
+		double[] ret = new double[l];
+
+		//every neuron has just one output and many inputs
+		//the set of all the outputs are the inputs for the next layer of neurons
+		//so we collect the outputs of every neuron and return it as an array
+		for (i = 0; i < l; i ++) {
+			ret [i] = neurons [i].output (inputs);
+		}
+
+		return ret;
+	}
 
 	public NNetwork(Int32[] sizes){
 		Int32 i = 0;
@@ -173,7 +206,7 @@ public class NNetwork {
 
 public class inicio {
     public static void Main() {
-		NNetwork mired = new NNetwork (new Int32[6] { 4, 5, 4,3,2,1 });
+		NNetwork mired = new NNetwork (new Int32[3] { 784, 30, 10 });
 
 		mired.ToString ();
     }
