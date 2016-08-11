@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 public static class numpy {
 	static Random rand = new Random(); //reuse this if you are generating many
@@ -82,6 +83,9 @@ public class Neuron {
 
 	private double _bias;
 	private double[] _weights;
+	private double[] _inputs;
+	private double _output = double.MinValue;
+	private double _error = 0;
 
 	public double[] weights {
 		get { return _weights;}
@@ -93,12 +97,16 @@ public class Neuron {
 		set { _bias = value;}
 	}
 
-	public double sigmoid(double z){
+	public double[] inputs {
+		get { return _inputs; }
+		set { _inputs = value;}
+	}
+	public double sigmoid(double z) {
 		return 1.0 / (1.0 + Math.Exp (-z));
 	}
 
-	public double sigmoidDerivative(double x){
-		double s = sigmoid (x);
+	public double derivative(){
+		double s = this.output();
 		return s * (1 - s);
 	}
 
@@ -106,15 +114,47 @@ public class Neuron {
 		this.bias = pBias;
 	}
 
+	public void adjustWeights(double error) {
+		Int32 i,
+			l = this._inputs.Length;
+
+		this._error = error;
+
+		for(i = 0; i < l; i ++)
+			this._weights[i] += (error * this.derivative()*this._inputs[i]); //remaining learn rate
+
+		this._bias += error * this.derivative(); // remaining learn rate
+
+		this._output = double.MinValue;
+	}
+
+	public double errorFeedback(Int32 inputIndex){
+		return this._error * this.derivative() * this._weights[inputIndex];
+	}
+
 
 	public double output(double[] i, double[] w) {
+		this.inputs = i;
 		this.weights = w;
-		return output (i);
+		this._output = double.MinValue;
+		return output ();
 	}
 
 	public double output(double[] i){
-		return sigmoid(numpy.dot(i, this.weights) + this.bias);
+		this.inputs = i;
+		this._output = double.MinValue;
+		return output();
 	}
+
+	public double output(){
+		if(this._output != double.MinValue)
+			return this._output;
+
+		this._output = sigmoid(numpy.dot(this.inputs, this.weights) + this.bias);
+		return this._output;
+	}
+
+
 }
 
 
@@ -172,6 +212,57 @@ public class NNetwork {
 		return ret;
 	}
 
+	public void feedbackward(double desired)
+
+
+	public void train(double[][] inputs, double[] desired){
+		Int32 l = inputs.Length;
+		Int32 i;
+		Int32 j, lNeurons;
+		double[] outputs = new double[l];
+		double[] errors = new double[l];
+		Neuron[] layer;
+
+		/*
+		1.- Initialise the network with small random weights.
+		2.- Present an input pattern to the input layer of the network.
+		3.- Feed the input pattern forward through the network to calculate its activation value.
+		4.- Take the difference between desired output and the activation value to calculate the network’s activation error.
+		5.- Adjust the weights feeding the output neuron to reduce its activation error for this input pattern.
+		6.- Propagate an error value back to each hidden neuron that is proportional to their contribution of the network’s activation error.
+		7.- Adjust the weights feeding each hidden neuron to reduce their contribution of error for this input pattern.
+		8.- Repeat steps 2 to 7 for each input pattern in the input collection.
+		9.- Repeat step 8 until the network is suitably trained.
+		*/
+
+		//1 initialize network (done!)
+		//2 inputs
+		//3 feed network and calculate values 
+		for(i = 0; i < l; i ++) {
+			outputs[i] = this.feedFordward(inputs[i]);
+			// 4 calculate difference between desired against ouput  
+			errors[i] = desired[i] - outputs[i];
+		}
+
+		
+		layer = layers[layers.Length-1];
+		lNeurons = layer.Length;
+
+		for(i = 0; i < l; i ++)
+			for(j = 0; j < lNeurons; j ++)
+				//5 adjust weight of output (last) neuron
+				layer[j].adjustWeights(errors[i]);  //TODO - from here
+
+		//6 propagate error value back since de last but one layer
+		for(i = num_layers-2; i >=0; i --){
+			layers[i].adjustWeights()
+		}
+		
+		
+
+	}
+
+
 	public NNetwork(Int32[] sizes){
 		Int32 i = 0;
 		double[] biasesTmp;
@@ -201,13 +292,24 @@ public class NNetwork {
 		}
 
 	}
+
+
 }
 
 
 public class inicio {
     public static void Main() {
-		NNetwork mired = new NNetwork (new Int32[3] { 784, 30, 10 });
+		NNetwork mired = new NNetwork (new Int32[3] { 5, 5, 1 });
 
-		mired.ToString ();
+		String entrada = System.Console.ReadLine();
+
+		ushort[] usEntrada = Array.ConvertAll(entrada.ToCharArray(), Convert.ToUInt16);
+
+		double[] dEntrada = new double[usEntrada.Length];
+		for(Int32 i = 0; i < dEntrada.Length;i++ )
+			dEntrada[i] = usEntrada[i];
+
+		double[] a = mired.feedFordward(dEntrada);
+		Console.WriteLine(a[0]);
     }
 }
