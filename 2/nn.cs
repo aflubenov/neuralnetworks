@@ -212,15 +212,14 @@ public class NNetwork {
 		return ret;
 	}
 
-	public void feedbackward(double desired)
 
-
-	public void train(double[][] inputs, double[] desired){
-		Int32 l = inputs.Length;
-		Int32 i;
-		Int32 j, lNeurons;
-		double[] outputs = new double[l];
-		double[] errors = new double[l];
+	public void train(double[] inputs, double[] desired){
+		Int32 lInputs = inputs.Length;
+		Int32 lOutput = desired.Length;
+		Int32 lNeurons, lNeuronsNextLayer;
+		Int32 i, j, k;
+		double[] output; //we might have many outputs 
+		double[] errors = new double[lOutput];
 		Neuron[] layer;
 
 		/*
@@ -238,24 +237,35 @@ public class NNetwork {
 		//1 initialize network (done!)
 		//2 inputs
 		//3 feed network and calculate values 
-		for(i = 0; i < l; i ++) {
-			outputs[i] = this.feedFordward(inputs[i]);
-			// 4 calculate difference between desired against ouput  
-			errors[i] = desired[i] - outputs[i];
-		}
-
 		
+		output = this.feedFordward(inputs);
+		// 4 calculate difference between desired against ouput
+		for(i = 0; i < lOutput; i ++)
+			errors[i] = desired[i] - output[i];
+
+		//5 adjust weight of output (last) neuron
+
+		//we get the last layer, and correct the ouput for every neuron
 		layer = layers[layers.Length-1];
 		lNeurons = layer.Length;
 
-		for(i = 0; i < l; i ++)
-			for(j = 0; j < lNeurons; j ++)
-				//5 adjust weight of output (last) neuron
-				layer[j].adjustWeights(errors[i]);  //TODO - from here
+		for(i = 0; i < lNeurons; i ++)
+			layer[i].adjustWeights(errors[i]); 
 
 		//6 propagate error value back since de last but one layer
+
+
+		//for every Neuron in every layer, it is input for every neuron on the next layer 
+		//so we correct our ouput as many times as input is our output
 		for(i = num_layers-2; i >=0; i --){
-			layers[i].adjustWeights()
+			lNeurons = layers[i].Length;
+			for(j = 0; j < lNeurons; j++){
+				//so this neuron (j) is the i-th input of every neuron in the next layer
+				//now we look for the neurons in the next layer
+				lNeuronsNextLayer = layers[i+1].Length;
+				for(k = 0; k < lNeuronsNextLayer; k++)
+					layers[i][j].adjustWeights(layers[i+1][k].errorFeedback(j));
+			}
 		}
 		
 		
@@ -306,10 +316,17 @@ public class inicio {
 		ushort[] usEntrada = Array.ConvertAll(entrada.ToCharArray(), Convert.ToUInt16);
 
 		double[] dEntrada = new double[usEntrada.Length];
+		double[] a;
+
 		for(Int32 i = 0; i < dEntrada.Length;i++ )
 			dEntrada[i] = usEntrada[i];
 
-		double[] a = mired.feedFordward(dEntrada);
-		Console.WriteLine(a[0]);
+	    for(;;){
+			mired.train(dEntrada, new double[1]{1});
+			a = mired.feedFordward(dEntrada);
+			Console.WriteLine("Salida: {0}", a[0]);
+			System.Console.ReadLine();
+		}
+
     }
 }
