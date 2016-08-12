@@ -136,19 +136,19 @@ public class Neuron {
 	public double output(double[] i, double[] w) {
 		this.inputs = i;
 		this.weights = w;
-		this._output = double.MinValue;
+		//this._output = double.MinValue;
 		return output ();
 	}
 
 	public double output(double[] i){
 		this.inputs = i;
-		this._output = double.MinValue;
+		//this._output = double.MinValue;
 		return output();
 	}
 
 	public double output(){
-		if(this._output != double.MinValue)
-			return this._output;
+		//if(this._output != double.MinValue)
+		//	return this._output;
 
 		this._output = sigmoid(numpy.dot(this.inputs, this.weights) + this.bias);
 		return this._output;
@@ -164,7 +164,15 @@ public class NNetwork {
 	private Int32[] sizes;
 
 	private Neuron[][] layers;
+	private bool _isTrained = false;
 
+	private Int32 HiddenLayers {
+		get {return num_layers - 2;}
+	}
+
+	public bool IsTrained {
+		get {return _isTrained; }
+	}
 	
 	private void setBiases(Int32 layerIndex, double[] biases){
 
@@ -212,14 +220,21 @@ public class NNetwork {
 		return ret;
 	}
 
+	public void train(double[][]inputs, double[][] desired){
+		Int32 i, l = inputs.Length;
+		for (i = 0; i < l; i ++)
+			train (inputs [i], desired [i]);
+	}
 
 	public void train(double[] inputs, double[] desired){
 		Int32 lInputs = inputs.Length;
 		Int32 lOutput = desired.Length;
 		Int32 lNeurons, lNeuronsNextLayer;
+		Int32 lHiddenLayers = this.HiddenLayers;
 		Int32 i, j, k;
 		double[] output; //we might have many outputs 
 		double[] errors = new double[lOutput];
+		double outputAvg = 0;
 		Neuron[] layer;
 
 		/*
@@ -240,13 +255,15 @@ public class NNetwork {
 		
 		output = this.feedFordward(inputs);
 		// 4 calculate difference between desired against ouput
-		for(i = 0; i < lOutput; i ++)
-			errors[i] = desired[i] - output[i];
+		for (i = 0; i < lOutput; i ++) {
+			errors [i] = desired [i] - output [i];
+			outputAvg += (errors[i]/lOutput);
+		}
 
 		//5 adjust weight of output (last) neuron
 
 		//we get the last layer, and correct the ouput for every neuron
-		layer = layers[layers.Length-1];
+		layer = layers[lHiddenLayers];
 		lNeurons = layer.Length;
 
 		for(i = 0; i < lNeurons; i ++)
@@ -257,7 +274,7 @@ public class NNetwork {
 
 		//for every Neuron in every layer, it is input for every neuron on the next layer 
 		//so we correct our ouput as many times as input is our output
-		for(i = num_layers-2; i >=0; i --){
+		for(i = lHiddenLayers-1; i >=0; i --){
 			lNeurons = layers[i].Length;
 			for(j = 0; j < lNeurons; j++){
 				//so this neuron (j) is the i-th input of every neuron in the next layer
@@ -308,24 +325,71 @@ public class NNetwork {
 
 
 public class inicio {
+
+	private static double[] stringTodouble(String p){
+		ushort[] usA = Array.ConvertAll (p.ToCharArray (), Convert.ToUInt16);
+		double[] dRet = new double[usA.Length];
+
+		for (Int32 i = 0; i < dRet.Length; i ++)
+			dRet [i] = usA [i];
+
+		return dRet;
+	}
+
+	private static double[][] stringTodouble(String[] p){
+		double[][] dRet = new double[p.Length][];
+		for (Int32 i = 0; i < p.Length; i ++)
+			dRet [i] = stringTodouble (p [i]);
+
+		return dRet;
+	}
+
+	public static myType[][] shuffle<myType>(myType[][] array){
+		List<myType[]> lNew = new List<myType[]> (array);
+		List<myType[]> lRet = new List<myType[]> ();
+		Random r = new Random ();
+		myType[] tmp;
+		Int32 iTmp;
+
+		while (lNew.Count != 0) {
+			iTmp = r.Next(0,lNew.Count);
+			tmp = lNew[iTmp];
+			lRet.Add(tmp);
+			lNew.Remove(tmp);
+		}
+
+		return lRet.ToArray();
+	}
+
     public static void Main() {
-		NNetwork mired = new NNetwork (new Int32[3] { 5, 5, 1 });
+		NNetwork mired = new NNetwork (new Int32[4] { 4, 4, 2, 2 });
 
-		String entrada = System.Console.ReadLine();
+		Int32 totalInputs = 8;
+		String sTmp; 
+		String[] input =  new String[8]{"paap", "meem", "abba", "saas", "saas", "naan", "sees", "soos"}; //System.Console.ReadLine();
+		double[] dtmp;
+		double[][] dDesired = new double[totalInputs][];
+		double[][] dEntrada = stringTodouble(input);
 
-		ushort[] usEntrada = Array.ConvertAll(entrada.ToCharArray(), Convert.ToUInt16);
+		for (Int32 i = 0; i < totalInputs; i++)
+			dDesired [i] = new double[2] { 1,1 };
 
-		double[] dEntrada = new double[usEntrada.Length];
-		double[] a;
+		for (; mired.feedFordward(dEntrada[3])[0] <=0.999 && mired.feedFordward(dEntrada[3])[1] <=0.999;) {
+			mired.train (shuffle<double> (dEntrada), dDesired);
+			dtmp = mired.feedFordward (dEntrada [3]);
+			Console.WriteLine ("----- ENTRENANDO: {0}.....{1} ------", dtmp[0], dtmp[1]);
 
-		for(Int32 i = 0; i < dEntrada.Length;i++ )
-			dEntrada[i] = usEntrada[i];
-
-	    for(;;){
-			mired.train(dEntrada, new double[1]{1});
-			a = mired.feedFordward(dEntrada);
-			Console.WriteLine("Salida: {0}", a[0]);
-			System.Console.ReadLine();
+		}
+	    for(Int32 i=0; !mired.IsTrained ;i++){
+			mired.train(dEntrada, dDesired);
+			Console.WriteLine ("---------- ITERACION {0} -----------------", i);
+			dtmp = mired.feedFordward (dEntrada [3]);
+			Console.WriteLine("Salida buena: {0}...{1}", dtmp[0], dtmp[1]);
+			sTmp = Console.ReadLine ();
+			dtmp = mired.feedFordward (stringTodouble (sTmp));
+			Console.WriteLine("Salida personal para {2}: {0}....{1}", dtmp[0], dtmp[1], sTmp);
+			Console.WriteLine ("-------------------------------");
+			Console.ReadLine ();
 		}
 
     }
