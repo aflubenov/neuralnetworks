@@ -94,7 +94,7 @@ public class Neuron {
 
 	double bias {
 		get { return _bias;}
-		set { _bias = -value;}
+		set { _bias = value;}
 	}
 
 	public double[] inputs {
@@ -324,73 +324,128 @@ public class NNetwork {
 }
 
 
-public class inicio {
+public class inicio
+{
 
-	private static double[] stringTodouble(String p){
-		ushort[] usA = Array.ConvertAll (p.ToCharArray (), Convert.ToUInt16);
-		double[] dRet = new double[usA.Length];
+    private static double[] stringTodouble(String p)
+    {
+        ushort[] usA = Array.ConvertAll(p.ToCharArray(), Convert.ToUInt16);
+        double[] dRet = new double[usA.Length];
 
-		for (Int32 i = 0; i < dRet.Length; i ++)
-			dRet [i] = usA [i];
+        for (Int32 i = 0; i < dRet.Length; i++)
+            dRet[i] = usA[i];
 
-		return dRet;
-	}
+        return dRet;
+    }
 
-	private static double[][] stringTodouble(String[] p){
-		double[][] dRet = new double[p.Length][];
-		for (Int32 i = 0; i < p.Length; i ++)
-			dRet [i] = stringTodouble (p [i]);
+    private static double[][] stringTodouble(String[] p)
+    {
+        double[][] dRet = new double[p.Length][];
+        for (Int32 i = 0; i < p.Length; i++)
+            dRet[i] = stringTodouble(p[i]);
 
-		return dRet;
-	}
+        return dRet;
+    }
 
-	public static myType[][] shuffle<myType>(myType[][] array){
-		List<myType[]> lNew = new List<myType[]> (array);
-		List<myType[]> lRet = new List<myType[]> ();
-		Random r = new Random ();
-		myType[] tmp;
-		Int32 iTmp;
+    public static myType[][] shuffle<myType>(myType[][] array)
+    {
+        List<myType[]> lNew = new List<myType[]>(array);
+        List<myType[]> lRet = new List<myType[]>();
+        Random r = new Random();
+        myType[] tmp;
+        Int32 iTmp;
 
-		while (lNew.Count != 0) {
-			iTmp = r.Next(0,lNew.Count);
-			tmp = lNew[iTmp];
-			lRet.Add(tmp);
-			lNew.Remove(tmp);
-		}
+        while (lNew.Count != 0)
+        {
+            iTmp = r.Next(0, lNew.Count);
+            tmp = lNew[iTmp];
+            lRet.Add(tmp);
+            lNew.Remove(tmp);
+        }
 
-		return lRet.ToArray();
-	}
+        return lRet.ToArray();
+    }
 
-    public static void Main() {
-		NNetwork mired = new NNetwork (new Int32[4] { 4, 4, 2, 2 });
+    private static NNetwork recognizeOneLetter()
+    {
+        NNetwork myNet = new NNetwork(new Int32[3] { 1, 1, 1 });
+        String[] tryiningData = new String[1] { "a" };
+        double[][] desired = new double[1][];
+        double[][] dTryiningData = stringTodouble(tryiningData);
+        double[] dtmp;
 
-		Int32 totalInputs = 8;
-		String sTmp; 
-		String[] input =  new String[8]{"paap", "meem", "abba", "saas", "saas", "naan", "sees", "soos"}; //System.Console.ReadLine();
-		double[] dtmp;
-		double[][] dDesired = new double[totalInputs][];
-		double[][] dEntrada = stringTodouble(input);
+        desired[0] = new double[1] { 1 };
 
-		for (Int32 i = 0; i < totalInputs; i++)
-			dDesired [i] = new double[2] { 1,1 };
+        for (; myNet.feedFordward(dTryiningData[0])[0] <= 0.99;)
+        {
+            myNet.train(dTryiningData, desired);
+            dtmp = myNet.feedFordward(dTryiningData[0]);
+            Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
+        }
 
-		for (; mired.feedFordward(dEntrada[3])[0] <=0.999 && mired.feedFordward(dEntrada[3])[1] <=0.999;) {
-			mired.train (shuffle<double> (dEntrada), dDesired);
-			dtmp = mired.feedFordward (dEntrada [3]);
-			Console.WriteLine ("----- ENTRENANDO: {0}.....{1} ------", dtmp[0], dtmp[1]);
+        return myNet;
+    }
 
-		}
-	    for(Int32 i=0; !mired.IsTrained ;i++){
-			mired.train(dEntrada, dDesired);
-			Console.WriteLine ("---------- ITERACION {0} -----------------", i);
-			dtmp = mired.feedFordward (dEntrada [3]);
-			Console.WriteLine("Salida buena: {0}...{1}", dtmp[0], dtmp[1]);
-			sTmp = Console.ReadLine ();
-			dtmp = mired.feedFordward (stringTodouble (sTmp));
-			Console.WriteLine("Salida personal para {2}: {0}....{1}", dtmp[0], dtmp[1], sTmp);
-			Console.WriteLine ("-------------------------------");
-			Console.ReadLine ();
-		}
+
+    private static NNetwork recognizeAnd()
+    {
+        NNetwork myNet = new NNetwork(new Int32[5] { 2, 5, 15, 15, 1 });
+
+
+        double[][] desired = new double[4][];
+        double[][] dTryiningData = new double[4][];
+        double[] dtmp;
+
+        desired[0] = new double[1] { 1 };
+        desired[1] = new double[1] { 1 };
+        desired[2] = new double[1] { 0 };
+        desired[3] = new double[1] { 0 };
+
+        dTryiningData[0] = new double[2] { 0, 0 };
+        dTryiningData[1] = new double[2] { 0, 1 };
+        dTryiningData[2] = new double[2] { 1, 0 };
+        dTryiningData[3] = new double[2] { 1, 1 };
+
+        for (; myNet.feedFordward(dTryiningData[1])[0] <= 0.99;) // || myNet.feedFordward(dTryiningData[0])[0] >= 0.7;)
+        {
+            myNet.train(dTryiningData, desired);
+            dtmp = myNet.feedFordward(dTryiningData[1]);
+            Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
+        }
+
+        
+        string sTmp;
+
+        for (;;)
+        {
+            dtmp = new double[2];
+            sTmp = Console.ReadLine();
+            dtmp[0] = double.Parse(sTmp);
+
+            sTmp = Console.ReadLine();
+            dtmp[1] = double.Parse(sTmp);
+
+            dtmp = myNet.feedFordward(dtmp);
+            Console.Write("Salida personal -------{0} ", dtmp[0]);
+        }
+
+        return myNet;
+    }
+
+
+    public static void Main()
+    {
+        NNetwork mired = recognizeAnd();
+        /*   double[] dtmp;
+           String sTmp;
+
+           for (Int32 i=0; !mired.IsTrained ;i++){
+               Console.WriteLine ("---------- ITERACION {0} -----------------", i);
+               sTmp = Console.ReadLine ();
+               dtmp = mired.feedFordward (stringTodouble (sTmp));
+               Console.WriteLine("Salida personal para {1}: {0}", dtmp[0],  sTmp);
+               Console.WriteLine ("-------------------------------");
+           }*/
 
     }
 }

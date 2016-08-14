@@ -1,0 +1,6 @@
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\bin\Debug\neuralnetrowks.exe.config
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\bin\Debug\neuralnetrowks.exe
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\bin\Debug\neuralnetrowks.pdb
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\obj\Debug\neuralnetrowks.csprojResolveAssemblyReference.cache
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\obj\Debug\neuralnetrowks.exe
+C:\Users\usuario general\Documents\proyectos\neuralnetworks\2\neuralnetrowks\neuralnetrowks\obj\Debug\neuralnetrowks.pdb
