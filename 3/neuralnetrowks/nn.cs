@@ -419,6 +419,8 @@ public class inicio
 
     public static void Main()
     {
+
+        readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
         recognizeOneLetter();
 
 
