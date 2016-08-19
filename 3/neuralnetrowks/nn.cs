@@ -15,7 +15,7 @@ public static class numpy {
 		return mean + stdDev * randStdNormal;
 	}
 
-    static T[] getArrayPopulated<T>(Int32 size, T value)
+    public static T[] getArrayPopulated<T>(Int32 size, T value)
     {
         T[] aRet = new T[size];
         for (Int32 i = 0; i < size; i++)
@@ -83,7 +83,45 @@ public static class numpy {
 
 	}
 
+    static public double[] add(double[] a, double[] b){
+        Int32 l = a.Length;
+        double[] ret = new double[l];
 
+        for(Int32 i = 0; i < l; i ++)
+            ret[i] = a[i]+b[i];
+
+        return ret;
+    }
+
+    static public double[] scalar(double[] a, double s){
+        Int32 l = a.Length;
+        double[] ret = new double[l];
+
+        for(Int32 i = 0; i < l; i ++)
+            ret[i] = a[i]*s;
+
+        return ret;
+    }
+
+    static public double[] abs(double[] a){
+        Int32 l = a.Length;
+        double[] ret = new double[l];
+
+        for(Int32 i = 0; i < l; i ++)
+            ret[i] = Math.Abs(a[i]);
+
+        return ret;
+    }
+
+    static public double[] sqr(double[] a){
+        Int32 l = a.Length;
+        double[] ret = new double[l];
+
+        for(Int32 i = 0; i < l; i ++)
+            ret[i] = a[i]*a[i];
+
+        return ret;
+    }
 }
 
 
@@ -325,16 +363,22 @@ public class inicio
     public static bool pseudoTrainSetUntilNumber(double[][] inputs, double[][] desired, double goodnumber, NeuralNetwork n)
     {
         bool aret = true;
+        double[] acumSum = numpy.getArrayPopulated<double>(desired[0].Length, 0);
 
+        //(1 / 2*n)*Sum( abs(activation-desired)^2) where n = number of training cases, and the sum is over every training case.
         n.pseudoTrainSet(inputs, desired);
         for (Int32 i = 0; i < desired.Length; i++)
         {
-            if (desired[i][0] == 1.0)
-                aret = aret && (Math.Abs(n.Feedfordward(inputs[i])[0] - 1.0) <=0.01);
-            else
-                aret = aret && (Math.Abs(n.Feedfordward(inputs[i])[0]) <= 0.01);
+
+            acumSum = numpy.add(acumSum, numpy.sqr(numpy.abs(numpy.add(n.Feedfordward(inputs[i]), numpy.scalar(desired[i], -1.0)))));
+
         }
 
+        acumSum = numpy.scalar(acumSum, 1.0/(2.0*inputs.Length));
+
+        for(Int32 i = 0; i < acumSum.Length; i++)
+            aret = aret && (acumSum[i] <= 0.0001);
+//Console.WriteLine("aRet es: {0} ", acumSum[0]);
         return aret;
     }
 
@@ -369,6 +413,44 @@ public class inicio
 
         return myNet;
     }
+
+
+
+    private static NeuralNetwork recognizeDigits()
+    {
+        NeuralNetwork myNet = new NeuralNetwork( 784, 784, 15, 10 );
+        readMNist digits = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
+        Int32 samples = 20;
+        double[][] tryiningData = new double[samples][];
+        double[][] desired = new double[samples][];
+        Int32 tmp = 0;
+
+        for(Int32 i = 0; i < samples; i ++){
+            digits.GiveNextValue(out tryiningData[i], ref tmp);
+            desired[i]=numpy.getArrayPopulated<double>(10,0);
+            desired[i][tmp-1]=1;
+        }
+
+        for (; !pseudoTrainSetUntilNumber(tryiningData, desired, 0.99, myNet);)
+        {
+            //myNet.pseudoTrainSet(tryiningData, desired);
+            myNet.FeedfordwardSet(tryiningData);
+            //Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
+        }
+
+        myNet.FeedfordwardSet(tryiningData);
+
+        String sTmp;
+        for (;;)
+        {
+            Console.WriteLine("Ingrese una letra: ");
+            sTmp = Console.ReadLine();
+            Console.WriteLine("La salida es: {0}", myNet.Feedfordward(letterToArray(sTmp))[0]);
+        }
+
+        return myNet;
+    }
+
 
 
     private static NeuralNetwork recognizeAnd()
@@ -420,9 +502,10 @@ public class inicio
     public static void Main()
     {
 
-        readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
-        recognizeOneLetter();
-
+       // readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
+        
+        //recognizeOneLetter();
+        recognizeDigits();
 
     }
 }
