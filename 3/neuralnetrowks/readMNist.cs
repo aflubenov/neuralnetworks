@@ -21,14 +21,14 @@ using System.IO;
                 brLabels = new BinaryReader(ifsLabels);
                 brImages = new BinaryReader(ifsImages);
 
-                
-                int magic1 = brImages.ReadInt32(); // discard
-                int numImages = brImages.ReadInt32();
-                int numRows = brImages.ReadInt32();
-                int numCols = brImages.ReadInt32();
+                //we move file pointers
+                brImages.ReadInt32(); // magic . discard
+                brImages.ReadInt32(); // number of images
+                brImages.ReadInt32(); //number of rows per image
+                brImages.ReadInt32(); // number of columns per image
 
-                int magic2 = brLabels.ReadInt32();
-                int numLabels = brLabels.ReadInt32();
+                brLabels.ReadInt32(); //other magic number
+                brLabels.ReadInt32(); //number of labels
 
         }
 
@@ -44,6 +44,16 @@ using System.IO;
 
                      lbl = brLabels.ReadByte();
                 return;
+        }
+
+        public double[] GiveNextSpecificValue(Int32 p){
+            double[] aRet = new double[28*28];
+            Int32 iTmp = -1;
+
+            for(;iTmp !=p;)
+                GiveNextValue(out aRet, ref iTmp );
+
+            return aRet;
         }
 
         public void GiveNextValue(out double[] pixels, ref Int32 lbl){
