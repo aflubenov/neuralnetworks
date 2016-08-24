@@ -145,16 +145,37 @@ public class NeuralNetwork
 
     private Int32 _nLayers;
     private struNeuron[][] _layers; //every layer has and arvitrary number of neurons
-    private double _learningRate = 0.9;
+    private double _learningRate = 3;
 
-    public void loadFromFile(){
-        BinaryReader oReader = new BinaryReader(File.Open("nndata.bin",FileMode.Open));
+    static public NeuralNetwork getFromFile(string fileName){
+        BinaryReader oReader = new BinaryReader(File.Open(fileName,FileMode.Open));
+        Int32 inputs;
+        Int32 layersNumber; 
+        Int32[] creationParams;
+        NeuralNetwork oRet;
+
+        inputs = oReader.ReadInt32(); //number of inputs
+        oReader.ReadInt32(); //number or layers (first dimention) for _inputs[n]
+        layersNumber = oReader.ReadInt32(); //number of layers for _nLayers;
+
+        creationParams = new Int32[layersNumber+1];
+        creationParams[0] = inputs;
+        for(Int32 i = 0; i < layersNumber; i ++)
+            creationParams[i+1] = oReader.ReadInt32();
+
+        oRet = new NeuralNetwork(creationParams);
+        oRet.loadFromFile(oReader);
+        oReader.Close();
+
+        return oRet;
+    }
+
+    public void loadFromFile(BinaryReader oReader){
         Int32 lNeurons;
         Int32 lWeights;
 
-        oReader.ReadInt32(); //number of inputs for _nInputs;
-        oReader.ReadInt32(); //number or layers (first dimention) for _inputs[n]
-        oReader.ReadInt32(); //number of layers for _nLayers;
+        //the file should be already opened and the file pointer should be in the begining of
+        //the layers iteration to load neurons
 
         for(Int32 i = 0; i < _nLayers; i ++){
             lNeurons = oReader.ReadInt32(); //number of neurons for this layer
@@ -166,14 +187,14 @@ public class NeuralNetwork
                     _layers[i][j].weights[k]=oReader.ReadDouble();
             }
         }
-
     }
 
-    public void saveToFile(){
-        BinaryWriter oWritter = new BinaryWriter(File.Open("nndata.bin",FileMode.Create));
+    public void saveToFile(string fileName){
+        BinaryWriter oWritter = new BinaryWriter(File.Open(fileName,FileMode.Create));
         //inputs number
         //inputs layer lengths  (first dimmention)
         //layers number
+        //the number of neuros for each layer
         //for every layer
           //number of neurons
             //neuron bias
@@ -184,6 +205,11 @@ public class NeuralNetwork
         oWritter.Write(_nInputs);
         oWritter.Write(_inputs.Length);
         oWritter.Write(_nLayers);
+
+        //we write the number of neurons of every layer, this is important for the loading from file.
+        for(Int32 i = 0; i < _nLayers; i ++)
+            oWritter.Write(_layers[i].Length);
+
         //now, for every layer, we write number of neurons and then the neurons
         for(Int32 i = 0; i < _nLayers; i ++){
             oWritter.Write(_layers[i].Length); //number of neurons for this layer
@@ -332,20 +358,28 @@ public class NeuralNetwork
         return s * (1 - s);
     }
 
-    public void FeedfordwardSet(double[][] inputs)
+    public void FeedfordwardSet(double[][] inputs, double[][] desired)
     {
         
         System.Text.StringBuilder texto = new System.Text.StringBuilder("");
         double[] salida;
+        System.Text.StringBuilder[] esperado = new System.Text.StringBuilder[desired.Length];
+
+        for(Int32 i = 0; i < desired.Length; i ++){
+            esperado[i] = new System.Text.StringBuilder("    Esperado: ");
+            for(Int32 j = 0; j < desired[i].Length; j++)
+                esperado[i].Append(String.Format(" {0:N0}", desired[i][j]));
+        }
+
 
         for(Int32 i = 0; i < inputs.Length; i++)
         {
             salida = Feedfordward(inputs[i]);
             //texto.Clear();
             for(Int32 j = 0; j < salida.Length; j ++)
-                texto.Append(String.Format(" {0:N6}", salida[j]));
+                texto.Append(String.Format(" {0:N9}", salida[j]));
             //Console.WriteLine(texto) ;
-            texto.Append("\n");
+            texto.Append(esperado[i].ToString()+"\n");
         }
         Console.SetCursorPosition(0,0);
         
@@ -366,225 +400,3 @@ public class NeuralNetwork
 }
 
 
-public class inicio
-{
-
-#region "mierda"
-
-    private static double letterToDouble(String p)
-    {
-        return Convert.ToUInt16(p.ToCharArray()[0]);
-    }
-    
-    private static double[] stringTodouble(String p)
-    {
-        ushort[] usA = Array.ConvertAll(p.ToCharArray(), Convert.ToUInt16);
-        double[] dRet = new double[usA.Length];
-
-        for (Int32 i = 0; i < dRet.Length; i++)
-            dRet[i] = usA[i];
-
-        return dRet;
-    }
-
-    public static myType[][] shuffle<myType>(myType[][] array)
-    {
-        List<myType[]> lNew = new List<myType[]>(array);
-        List<myType[]> lRet = new List<myType[]>();
-        Random r = new Random();
-        myType[] tmp;
-        Int32 iTmp;
-
-        while (lNew.Count != 0)
-        {
-            iTmp = r.Next(0, lNew.Count);
-            tmp = lNew[iTmp];
-            lRet.Add(tmp);
-            lNew.Remove(tmp);
-        }
-
-        return lRet.ToArray();
-    }
-
-    public static T[][] arrayOfArray<T>(T[] p)
-    {
-        T[][] aRet = new T[p.Length][];
-        for (Int32 i = 0; i < p.Length; i++)
-            aRet[i] = new T[1] { p[i] };
-        return aRet;
-    }
-
-
-    public static double[] letterToArray(Int32 letterIndex)
-    {
-        double[] aRet = new double[27];
-        aRet[letterIndex] = 1;
-        return aRet;
-    }
-
-    public static double[] letterToArray(String letter)
-    {
-        return letterToArray(Convert.ToInt32(letterToDouble(letter)) - 97);
-    }
-
-
-
-    public static bool pseudoTrainSetUntilNumber(double[][] inputs, double[][] desired, double goodnumber, NeuralNetwork n)
-    {
-        bool aret = true;
-        double[] acumSum = numpy.getArrayPopulated<double>(desired[0].Length, 0);
-
-        //(1 / 2*n)*Sum( abs(activation-desired)^2) where n = number of training cases, and the sum is over every training case.
-        n.pseudoTrainSet(inputs, desired);
-        for (Int32 i = 0; i < desired.Length; i++)
-        {
-
-            acumSum = numpy.add(acumSum, numpy.sqr(numpy.abs(numpy.add(n.Feedfordward(inputs[i]), numpy.scalar(desired[i], -1.0)))));
-
-        }
-
-        acumSum = numpy.scalar(acumSum, 1.0/(2.0*inputs.Length));
-
-        for(Int32 i = 0; i < acumSum.Length; i++)
-            aret = aret && (acumSum[i] <= 0.0001);
-//Console.WriteLine("aRet es: {0} ", acumSum[0]);
-        return aret;
-    }
-
-    private static void recognizeOneLetter()
-    {
-        NeuralNetwork myNet = new NeuralNetwork( 27, 27, 108, 27, 1 );
-        double[][] tryiningData = new double[27][];
-        double[][] desired = new double[27][];
-        //create 27 letters
-        for (Int32 i = 0; i < 27; i++)
-        {
-            tryiningData[i] = letterToArray(i);
-            desired[i] = new double[1] { i < 5 ? 1 : 0 }; //we want letters from a to i, 
-        }
-
-        for (; !pseudoTrainSetUntilNumber(tryiningData, desired, 0.99, myNet);)
-        {
-            //myNet.pseudoTrainSet(tryiningData, desired);
-            myNet.FeedfordwardSet(tryiningData);
-            //Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
-        }
-
-        myNet.FeedfordwardSet(tryiningData);
-
-        String sTmp;
-        for (;;)
-        {
-            Console.WriteLine("Ingrese una letra: ");
-            sTmp = Console.ReadLine();
-            Console.WriteLine("La salida es: {0}", myNet.Feedfordward(letterToArray(sTmp))[0]);
-        }
-
-
-    }
-
-
-
-    private static void recognizeDigits()
-    {
-        NeuralNetwork myNet = new NeuralNetwork( 784, 15, 10 );
-        readMNist digits = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
-        Int32 samples = 6;
-        double[][] tryiningData = new double[samples][];
-        double[][] desired = new double[samples][];
-        Int32 tmp = 0;
-
-        for(Int32 i = 0; i < samples; i ++){
-            digits.GiveNextValue(out tryiningData[i], ref tmp);
-            desired[i]=numpy.getArrayPopulated<double>(10,0);
-            desired[i][tmp]=1;
-        }
-
-        Console.Clear();
-        for (; !pseudoTrainSetUntilNumber(tryiningData, desired, 0.99, myNet);)
-        {
-            //myNet.pseudoTrainSet(tryiningData, desired);
-            myNet.FeedfordwardSet(tryiningData);
-            //Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
-        }
-        myNet.saveToFile();
-
-        myNet.FeedfordwardSet(tryiningData);
-
-        Console.SetCursorPosition(0,30);
-        String sTmp;
-        for (;;)
-        {
-            Console.WriteLine("Ingrese un número: ");
-            sTmp = Console.ReadLine();
-            tryiningData[0] = digits.GiveNextSpecificValue(Int32.Parse(sTmp));
-
-            tryiningData[0] = myNet.Feedfordward(tryiningData[0]);
-            
-            Console.Write("Rta: ");
-            for(tmp = 0; tmp < 10; tmp++)
-                Console.Write(" [{0:N6}] ",tryiningData[0][tmp]);
-            Console.WriteLine("");
-
-        }
-
-    }
-
-
-
-    private static void recognizeAnd()
-    {
-        NeuralNetwork myNet = new NeuralNetwork( 2, 5, 15, 15, 1 );
-
-
-        double[][] desired = new double[4][];
-        double[][] dTryiningData = new double[4][];
-        double[] dtmp;
-
-        desired[0] = new double[1] { 1 };
-        desired[1] = new double[1] { 1 };
-        desired[2] = new double[1] { 0 };
-        desired[3] = new double[1] { 0 };
-
-        dTryiningData[0] = new double[2] { 0, 0 };
-        dTryiningData[1] = new double[2] { 0, 1 };
-        dTryiningData[2] = new double[2] { 1, 0 };
-        dTryiningData[3] = new double[2] { 1, 1 };
-
-        for (; myNet.Feedfordward(dTryiningData[1])[0] <= 0.99;) // || myNet.feedFordward(dTryiningData[0])[0] >= 0.7;)
-        {
-            myNet.pseudoTrainSet(dTryiningData, desired);
-            myNet.FeedfordwardSet(dTryiningData);
-            //Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
-        }
-
-        
-        string sTmp;
-
-        for (;;)
-        {
-            dtmp = new double[2];
-            sTmp = Console.ReadLine();
-            dtmp[0] = double.Parse(sTmp);
-
-            sTmp = Console.ReadLine();
-            dtmp[1] = double.Parse(sTmp);
-
-            dtmp = myNet.Feedfordward(dtmp);
-            Console.Write("Salida personal -------{0} ", dtmp[0]);
-        }
-
-        
-    }
-#endregion
-
-    public static void Main()
-    {
-
-       // readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
-        
-        //recognizeOneLetter();
-        recognizeDigits();
-
-    }
-}

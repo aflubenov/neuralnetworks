@@ -17,11 +17,11 @@ using System.IO;
         BinaryReader brLabels;
         BinaryReader brImages;
 
-        private void setupReader(){
-                brLabels = new BinaryReader(ifsLabels);
-                brImages = new BinaryReader(ifsImages);
+        public void reset(){
+            brImages.BaseStream.Seek(0, SeekOrigin.Begin);
+            brLabels.BaseStream.Seek(0, SeekOrigin.Begin);
 
-                //we move file pointers
+            //we move file pointers
                 brImages.ReadInt32(); // magic . discard
                 brImages.ReadInt32(); // number of images
                 brImages.ReadInt32(); //number of rows per image
@@ -29,6 +29,12 @@ using System.IO;
 
                 brLabels.ReadInt32(); //other magic number
                 brLabels.ReadInt32(); //number of labels
+        }
+        private void setupReader(){
+                brLabels = new BinaryReader(ifsLabels);
+                brImages = new BinaryReader(ifsImages);
+                reset();
+                
 
         }
 
