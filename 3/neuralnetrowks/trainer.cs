@@ -123,6 +123,7 @@ public class inicio
                 myNet.FeedfordwardSet(tryiningData, desired, samplesLearned);
                 iterations++;
             }
+            myNet.saveToFile(fileName+"bkup");
             myNet.saveToFile(fileName);
 
             Console.WriteLine("Learned {1} samples, took {0} iterations                                                                                 \n=================================================================", iterations, samplesLearned);
