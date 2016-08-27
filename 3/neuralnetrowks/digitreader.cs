@@ -42,15 +42,24 @@ public class inicio
         double[] result;
         double max = 0.0;
         double numb = 0;
+        readMNist digits = new readMNist("t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte");
+        Int32 tmp = 0;
 
-        digit = imgToDouble(digitImageBitmap);
-
+        //digit = imgToDouble(digitImageBitmap);
+     
         myNet = NeuralNetwork.getFromFile(fileName); // new NeuralNetwork( 784, 15, 10 );
 
-        
-
+        for(;;){    
+       digits.GiveNextValue(out digit, ref tmp);
         result = myNet.Feedfordward(digit);
         
+        for(Int32 i = 0; i < 28; i ++){
+            Console.Write("\n");
+            for(Int32 j = 0; j < 28; j ++)
+                Console.Write("{0}", digit[i*28+j] > 0?"*":" ");
+        }
+        max = -1.0;
+
         for(Int32 i = 0; i < result.Length; i++)
             if(result[i] > max){
                 max = result[i];
@@ -60,6 +69,8 @@ public class inicio
             Console.Write(" Es un {0} ???? ", numb);
 
         Console.WriteLine("\n");
+        Console.ReadLine();
+    }
     }
 
 
