@@ -64,26 +64,19 @@ public class inicio
     }
 
 
-    public static bool pseudoTrainSetUntilNumber(double[][] inputs, double[][] desired, NeuralNetwork n, double presission)
+    public static bool pseudoTrainSetUntilNumber(double[][] inputs, double[][] desired, NeuralNetwork n, double presission, Int32 samplesToLearn)
     {
-        bool aret = true;
-        double[] acumSum = numpy.getArrayPopulated<double>(desired[0].Length, 0);
-
-        //(1 / 2*n)*Sum( abs(activation-desired)^2) where n = number of training cases, and the sum is over every training case.
-        n.pseudoTrainSet(inputs, desired);
-        for (Int32 i = 0; i < desired.Length; i++)
+        double acumSum = 0.0;
+        double tmp = samplesToLearn * 2.0;
+        //(1 / 2*n)*Sum( mod(desired-activation)^2) where n = number of training cases, and the sum is over every training case.
+        n.pseudoTrainSet(inputs, desired, samplesToLearn);
+        for (Int32 i = 0; i < samplesToLearn; i++)
         {
-
-            acumSum = numpy.add(acumSum, numpy.sqr(numpy.abs(numpy.add(n.Feedfordward(inputs[i]), numpy.scalar(desired[i], -1.0)))));
+            acumSum = acumSum + numpy.absSqr(numpy.add(desired[i], numpy.scalar(n.Feedfordward(inputs[i]), -1.0)));
 
         }
 
-        acumSum = numpy.scalar(acumSum, 1.0/(2.0*inputs.Length));
-
-        for(Int32 i = 0; i < acumSum.Length; i++)
-            aret = aret && (acumSum[i] <= presission);
-
-        return aret;
+        return acumSum <= (1.0/tmp)*presission;
     }
 
 
@@ -91,75 +84,50 @@ public class inicio
     {
         NeuralNetwork myNet;
         readMNist digits = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
-        Int32 samples = 30;
+        Int32 samples = 100;
+        Int32 samplesLearned = 0;
         
         double[][] tryiningData = new double[samples][];
         double[][] desired = new double[samples][];
         Int32 tmp = 0;
         Int32 iterations = 0;
-        Int32 cursorPositionIteration = 0;
 
-        if(fileName.Length == 0 || !File.Exists(fileName))
-            myNet = new NeuralNetwork( 784, 30, 10 );
-        else
-            myNet = NeuralNetwork.getFromFile(fileName); // new NeuralNetwork( 784, 15, 10 );
+        if(fileName.Length == 0 || (!File.Exists(fileName) && !File.Exists(fileName+"bkup")))
+            myNet = new NeuralNetwork( 784, 32, 16, 10 );
+        else if(File.Exists(fileName+"bkup"))
+            myNet = NeuralNetwork.getFromFile(fileName+"bkup"); // new NeuralNetwork( 784, 15, 10 );
+        else 
+            myNet = NeuralNetwork.getFromFile(fileName);
 
         Console.Clear();
-        Int32 learningSet = 0;
-        Int32 maxIterations = 300;
         bool  wannaStop=false;
         //the next logic is: if we are already trained with the set of samples, we get more, 
         while(!wannaStop){
 
+            samplesLearned++;
+            //we get one sample 
+            digits.GiveNextValue(out tryiningData[samplesLearned-1], ref tmp);
+            desired[samplesLearned-1]=numpy.getArrayPopulated<double>(10,0);
+            desired[samplesLearned-1][tmp]=1;
+
             iterations = 0;
-            if(learningSet==0){
-                Console.SetCursorPosition(0,cursorPositionIteration++ % 12 + samples +1);
-                Console.WriteLine("--------------                                                                                           ");
-            }
-
-
-            learningSet++;
-            //we get a bunch of number examples
-            for(Int32 i = 0; i < samples; i ++){
-                digits.GiveNextValue(out tryiningData[i], ref tmp);
-                desired[i]=numpy.getArrayPopulated<double>(10,0);
-                desired[i][tmp]=1;
-            }
-
-            Console.SetCursorPosition(0,cursorPositionIteration % 12 + samples +1 );
-            Console.Write("Training set {0}, maxIterations {1}...                                                                      ", learningSet, maxIterations);
-            for (; !pseudoTrainSetUntilNumber(tryiningData, desired, myNet, 0.06) && iterations < maxIterations;)
+            Console.SetCursorPosition(0,samplesLearned+1);
+            Console.Write("Training sample {0}...                                                                      ", samplesLearned);
+            for (; !pseudoTrainSetUntilNumber(tryiningData, desired, myNet, 0.1, samplesLearned); ) // && iterations < maxIterations;)
             {
                 if(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape){
-                    myNet.saveToFile(fileName);
+                    myNet.saveToFile(fileName+"bkup");
                     wannaStop=true;
                     break;
                 }
-                myNet.FeedfordwardSet(tryiningData, desired);
+                myNet.FeedfordwardSet(tryiningData, desired, samplesLearned);
                 iterations++;
             }
             myNet.saveToFile(fileName);
-            Console.SetCursorPosition(0,cursorPositionIteration++ % 12 + samples +1 );
-            if(iterations >= maxIterations)
-                Console.Write("Learned Set {1} REACHED {0} iterations                                                                              \n=================================================================", iterations, learningSet);
-            else
-                Console.Write("Learned Set {1} took {0} iterations                                                                                 \n=================================================================", iterations, learningSet);
-            
-            //if reached max iterations, we start over again
-            if(iterations >= maxIterations){
-                maxIterations = maxIterations * 10;
-                digits.reset();
-                iterations = 0;
-                learningSet = 0;
-            }
 
-            if(iterations > (maxIterations*0.2))
-                maxIterations = Math.Max((iterations+maxIterations)/2,100);
-
+            Console.WriteLine("Learned {1} samples, took {0} iterations                                                                                 \n=================================================================", iterations, samplesLearned);
 
         }
-
-        myNet.FeedfordwardSet(tryiningData, desired);
 
         Console.SetCursorPosition(0,30);
         String sTmp;
@@ -204,8 +172,8 @@ public class inicio
 
         for (; myNet.Feedfordward(dTryiningData[1])[0] <= 0.99;) // || myNet.feedFordward(dTryiningData[0])[0] >= 0.7;)
         {
-            myNet.pseudoTrainSet(dTryiningData, desired);
-            myNet.FeedfordwardSet(dTryiningData, desired);
+            myNet.pseudoTrainSet(dTryiningData, desired, dTryiningData.Length);
+            myNet.FeedfordwardSet(dTryiningData, desired, dTryiningData.Length);
             //Console.WriteLine("----- ENTRENANDO: {0}", dtmp[0]);
         }
 

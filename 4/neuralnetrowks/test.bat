@@ -1,0 +1,10 @@
+digitreader.exe 0.png
+digitreader.exe 1.png
+digitreader.exe 2.png
+digitreader.exe 3.png
+digitreader.exe 4.png
+digitreader.exe 5.png
+digitreader.exe 6.png
+digitreader.exe 7.png
+digitreader.exe 8.png
+digitreader.exe 9.png

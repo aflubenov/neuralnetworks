@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 public static class numpy {
 	static Random rand = new Random(); //reuse this if you are generating many
@@ -104,14 +105,8 @@ public static class numpy {
         return ret;
     }
 
-    static public double[] abs(double[] a){
-        Int32 l = a.Length;
-        double[] ret = new double[l];
-
-        for(Int32 i = 0; i < l; i ++)
-            ret[i] = Math.Abs(a[i]);
-
-        return ret;
+    static public double absSqr(double[] a){
+        return dot(a,a);
     }
 
     static public double[] sqr(double[] a){
@@ -145,7 +140,7 @@ public class NeuralNetwork
 
     private Int32 _nLayers;
     private struNeuron[][] _layers; //every layer has and arvitrary number of neurons
-    private double _learningRate = 3;
+    private double _learningRate = -0.5;
 
     static public NeuralNetwork getFromFile(string fileName){
         BinaryReader oReader = new BinaryReader(File.Open(fileName,FileMode.Open));
@@ -267,16 +262,23 @@ public class NeuralNetwork
     private double[] activateLayer(double[] inputs, Int32 layerNumber)
     {
         Int32 l = _layers[layerNumber].Length;
-        struNeuron neuron;
+       // struNeuron neuron;
         double[] aRet = new double[l];
+        Task[] tasks = new Task[l];
 
         for (Int32 i = 0; i < l; i++)
         {
-            neuron = _layers[layerNumber][i];
-            neuron.output = Sigmoid(numpy.dot(neuron.weights, inputs) + neuron.bias);
-            _layers[layerNumber][i].output = neuron.output;
-            aRet[i] = neuron.output;
+            Int32 ii  = i;
+            tasks[i] = Task.Factory.StartNew(() => {
+                struNeuron neuron = _layers[layerNumber][ii];
+
+                neuron.output = Sigmoid(numpy.dot(neuron.weights, inputs) + neuron.bias);
+                _layers[layerNumber][ii].output = neuron.output;
+                aRet[ii] = neuron.output;
+            });
         }
+
+        Task.WaitAll(tasks);
 
         return aRet;
     }
@@ -308,11 +310,12 @@ public class NeuralNetwork
 
         for (i = 0; i < l; i++)
         {
-            neuron.weights[i] += (derivativeError * inputs[i] * _learningRate); //remaining learn rate
             errorFeedback[i] = derivativeError * neuron.weights[i];
+            neuron.weights[i] -= (derivativeError * inputs[i] * _learningRate); 
+            
         }
 
-        neuron.bias += (derivativeError * _learningRate); // remaining learn rate
+        neuron.bias -= (derivativeError * _learningRate); 
 
         return errorFeedback;
     }
@@ -358,21 +361,21 @@ public class NeuralNetwork
         return s * (1 - s);
     }
 
-    public void FeedfordwardSet(double[][] inputs, double[][] desired)
+    public void FeedfordwardSet(double[][] inputs, double[][] desired, Int32 samplesToLearn)
     {
         
         System.Text.StringBuilder texto = new System.Text.StringBuilder("");
         double[] salida;
         System.Text.StringBuilder[] esperado = new System.Text.StringBuilder[desired.Length];
 
-        for(Int32 i = 0; i < desired.Length; i ++){
+        for(Int32 i = 0; i < samplesToLearn; i ++){
             esperado[i] = new System.Text.StringBuilder("    Esperado: ");
             for(Int32 j = 0; j < desired[i].Length; j++)
                 esperado[i].Append(String.Format(" {0:N0}", desired[i][j]));
         }
 
 
-        for(Int32 i = 0; i < inputs.Length; i++)
+        for(Int32 i = 0; i < samplesToLearn; i++)
         {
             salida = Feedfordward(inputs[i]);
             //texto.Clear();
@@ -392,9 +395,9 @@ public class NeuralNetwork
         Feedbackward(desired);
     }
 
-    public void pseudoTrainSet(double[][] inputs, double[][] desired)
+    public void pseudoTrainSet(double[][] inputs, double[][] desired, Int32 samplesToLearn)
     {
-        for (Int32 i = 0; i < inputs.Length; i++)  
+        for (Int32 i = 0; i < samplesToLearn; i++)  
             pseudoTrain(inputs[i], desired[i]);
     }
 }
