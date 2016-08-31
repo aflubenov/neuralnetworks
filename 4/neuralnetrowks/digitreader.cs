@@ -83,11 +83,11 @@ public class inicio
     public static void Main(string[] args)
     {
 
-       // readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
-        
+        // readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
+
         //recognizeOneLetter();
 
-        recognizeDigits("recognizeHandWritedDigits.bin", args[0]);
+        recognizeDigits("recognizeHandWritedDigits.bin", "x.x"); // args[0]);
 
     }
 }

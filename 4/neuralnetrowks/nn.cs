@@ -237,15 +237,13 @@ public class NeuronsLayer{
 
         this.inputs[0] = new double[pnInputs];
         this.weights = new double[pnNeurons][];
-       // this.nabla_w = new double[pnNeurons][];
-        for(Int32 i = 0; i < pnInputs; i ++){
-            this.weights[i] = numpy.randn1(pnInputs);
-           // this.nabla_w[i] = new double[pnInputs];
-        }
-
         this.tmp = new double[pnNeurons][];
-        for(Int32 i = 0; i < pnNeurons; i ++)
-            this.tmp[i] = new double[1]{0};
+        // this.nabla_w = new double[pnNeurons][];
+        for (Int32 i = 0; i < pnNeurons; i ++){
+            this.weights[i] = numpy.randn1(pnInputs);
+            this.tmp[i] = new double[1] { 0 };
+            // this.nabla_w[i] = new double[pnInputs];
+        }
 
         this.biases = numpy.randn1(pnNeurons);
         this.nabla_b = new double[pnNeurons];
@@ -276,7 +274,7 @@ public class NeuralNetwork
     private Int32 _nLayers;
     private Int32 _nInputs;
     private NeuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
-    private double _learningRate = -0.5;
+    private double _learningRate = 0.9;
 
     static public NeuralNetwork getFromFile(string fileName){
         BinaryReader oReader = new BinaryReader(File.Open(fileName,FileMode.Open));
@@ -370,9 +368,6 @@ public class NeuralNetwork
      * */
     public NeuralNetwork(params Int32[] IHlO)
     {
-//        Int32 nNeurons, nNeuronsAnt;
-
-        //configuring input information
         _nInputs = IHlO[0];
         _nLayers = IHlO.Length - 1;
         _layers = new NeuronsLayer[_nLayers];
@@ -446,33 +441,46 @@ public class NeuralNetwork
         return s * (1 - s);
     }
 
-    public void FeedfordwardSet(double[][] inputs, double[][] desired)
+    public void FeedfordwardSet(double[][] inputs, double[][] desired, Int32 samplesToLearn)
     {
-        
-        System.Text.StringBuilder texto = new System.Text.StringBuilder("");
+
+        // System.Text.StringBuilder texto = new System.Text.StringBuilder("");
         double[] salida;
         System.Text.StringBuilder[] esperado = new System.Text.StringBuilder[desired.Length];
 
-        for(Int32 i = 0; i < desired.Length; i ++){
+        for (Int32 i = 0; i < samplesToLearn; i++)
+        {
             esperado[i] = new System.Text.StringBuilder("    Esperado: ");
-            for(Int32 j = 0; j < desired[i].Length; j++)
+            for (Int32 j = 0; j < desired[i].Length; j++)
                 esperado[i].Append(String.Format(" {0:N0}", desired[i][j]));
         }
 
 
-        for(Int32 i = 0; i < inputs.Length; i++)
+        Console.SetCursorPosition(0, 0);
+        for (Int32 i = 0; i < samplesToLearn; i++)
         {
             salida = Feedfordward(inputs[i]);
             //texto.Clear();
-            for(Int32 j = 0; j < salida.Length; j ++)
-                texto.Append(String.Format(" {0:N9}", salida[j]));
+            for (Int32 j = 0; j < salida.Length; j++)
+            {
+                if (desired[i][j] == 1.0)
+                {
+                    Console.BackgroundColor = ConsoleColor.DarkGreen;
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                }
+                //texto.Append(String.Format(" {0:N9}", salida[j]));
+                Console.Write(String.Format(" {0:N9}", salida[j]));
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Gray;
+
+            }
             //Console.WriteLine(texto) ;
-            texto.Append(esperado[i].ToString()+"\n");
+            //texto.Append(esperado[i].ToString()+"\n");
+            Console.Write(esperado[i].ToString() + "\n");
         }
-        Console.SetCursorPosition(0,0);
-        
-        Console.WriteLine(texto.ToString());
-//        System.Threading.Thread.Sleep(10);
+
+
+        //Console.WriteLine(texto.ToString());
     }
 
     //TODO
@@ -490,39 +498,46 @@ public class NeuralNetwork
     }
 
     private void cleanNablaTmp(){
-        for(Int32 i = 0; i < _nLayers; i++)
-            _layers[i].cleanNablaTmp();
+        var iterations = Enumerable.Range(0, _nLayers);
+        var pquery = from num in iterations.AsParallel() select num;
+        pquery.ForAll((e) => _layers[e].cleanNablaTmp());
     }
 
     private void adjustWeightsAndBiases(Int32 pIndex, double pSamplesNumber, double pLearningRate){
         NeuronsLayer current = _layers[pIndex];
-        Int32 i, j;
+        
         //adjust biases
-        for(i = 0; i < current.nNeurons; i++){
-            current.nabla_b_tmp[i]+=current.nabla_b[i];
-            current.biases[i]-=((pLearningRate/pSamplesNumber)*current.nabla_b_tmp[i]);
-        }
+        var iterations = Enumerable.Range(0, current.nNeurons);
+        var pquery = from num in iterations.AsParallel() select num;
+        pquery.ForAll((i) => {
+            current.nabla_b_tmp[i] += current.nabla_b[i];
+            current.biases[i] -= ((pLearningRate / pSamplesNumber) * current.nabla_b_tmp[i]);
 
-        for(i = 0; i < current.nNeurons; i++)
-            for(j = 0; j < current.nInput; j ++){
-                current.nabla_w_tmp[i][j]+=current.nabla_w[i][j];
-                current.weights[i][j]-=((pLearningRate/pSamplesNumber)*current.nabla_w_tmp[i][j]);
+            for (Int32 j = 0; j < current.nInput; j++)
+            {
+                current.nabla_w_tmp[i][j] += current.nabla_w[i][j];
+                current.weights[i][j] -= ((pLearningRate / pSamplesNumber) * current.nabla_w_tmp[i][j]);
             }
+        });
+
     }
 
     public void pseudoTrainSet(double[][] inputs, double[][] desired)
     {
         cleanNablaTmp();
-        
-        for (Int32 i = 0; i < inputs.Length; i++){
+        IEnumerable<Int32> iterations;
+        Int32 l = inputs.Length;
+
+        for (Int32 i = 0; i < l; i++){
             //we create a result
             Feedfordward(inputs[i]);
             //we prepare a backpropagation
             BackProp(desired[i]);
             //now we calculate and change biases and weights
 
-            for(Int32 iLayer = 0; iLayer < _nLayers; iLayer++ )
-                adjustWeightsAndBiases(iLayer, inputs.Length, this._learningRate);
+            iterations = Enumerable.Range(0, _nLayers);
+            var pquery = from num in iterations.AsParallel() select num;
+            pquery.ForAll((iLayer) =>adjustWeightsAndBiases(iLayer, l, this._learningRate));
         }
     }
 }
