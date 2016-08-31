@@ -42,24 +42,39 @@ public class inicio
         double[] result;
         double max = 0.0;
         double numb = 0;
+        readMNist digits = new readMNist("t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte");
+        Int32 tmp = 0;
+        double digitsReaded = 0.0, digitsMached = 0.0;
 
-        digit = imgToDouble(digitImageBitmap);
-
+        //digit = imgToDouble(digitImageBitmap);
+     
         myNet = NeuralNetwork.getFromFile(fileName); // new NeuralNetwork( 784, 15, 10 );
 
-        
-
+        for(;;){    
+       digits.GiveNextValue(out digit, ref tmp);
         result = myNet.Feedfordward(digit);
         
+        for(Int32 i = 0; i < 28; i ++){
+            Console.Write("\n");
+            for(Int32 j = 0; j < 28; j ++)
+                Console.Write("{0}", digit[i*28+j] > 0?"*":" ");
+        }
+        max = -1.0;
+
         for(Int32 i = 0; i < result.Length; i++)
             if(result[i] > max){
                 max = result[i];
                 numb = i;
             }
         
-            Console.Write(" Es un {0} ???? ", numb);
+        digitsReaded +=1.0;
+        if(numb == tmp) digitsMached += 1.0;
+          
+        Console.Write(" Es un {0} ????     Aciertos: {1:N0} de {2:N0}= {3:N2}%", numb, digitsMached, digitsReaded, (digitsMached/digitsReaded)*100.0 );
 
         Console.WriteLine("\n");
+        Console.ReadLine();
+    }
     }
 
 
@@ -72,32 +87,7 @@ public class inicio
         
         //recognizeOneLetter();
 
-        //recognizeDigits("recognizeHandWritedDigits.bin", args[0]);
+        recognizeDigits("recognizeHandWritedDigits.bin", args[0]);
 
-        double[][] a = new double[3][]; //3 columns, 4 rows
-        double[][] b = new double[2][]; //2 rows, 4 columns
-        double[][] c = new double[2][]; //2 rows, 3 columns  
-
-        a[0] = new double[4]{1,2,3,4};
-        a[1] = new double[4]{5,6,7,8};
-        a[2] = new double[4]{9,8,7,6};
-        
-        b[0] = new double[4]{1,2,3,4};
-        b[1] = new double[4]{5,6,7,8};
-
-        c[0] = new double[3];
-        c[1] = new double[3];
-
-        
-        numpy.matrixMult(a,b,ref c);
-
-        Console.Write("\n\n\n");
-        for(Int32 i= 0; i < 2; i ++){
-            for(Int32 j = 0; j < 3; j ++ )
-                Console.Write("[{0}]  ", c[i][j]);
-            Console.Write("\n");
-        }
-
-        Console.Write("\n\n\n");
     }
 }

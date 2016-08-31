@@ -63,7 +63,7 @@ public static class numpy {
      *
      *    outRes should be: outRes[rowIndex][rowVector]
      */
-    static public double[][] matrixMult(double[][] a, double[][] b, ref double[][] outRes){
+    static public double[][] matrixMult_T1(double[][] a, double[][] b, ref double[][] outRes){
         Int32 li = a.Length;
         Int32 lj = b.Length;
         double[][] aTmp = outRes;
@@ -78,7 +78,7 @@ public static class numpy {
         return outRes;
     }
 
-    static public double[][] matrixMult(double[][] a, double[][] b){
+    static public double[][] matrixMult_T1(double[][] a, double[][] b){
         Int32 l = b.Length;
         Int32 la = a.Length;
         double[][] aRet = new double[l][];
@@ -86,7 +86,7 @@ public static class numpy {
         for(Int32 i = 0; i < l; i ++)
             aRet[i] = new double[la];
 
-        numpy.matrixMult(a,b, ref aRet);
+        numpy.matrixMult_T1(a,b, ref aRet);
 
         return aRet;
     }
@@ -105,10 +105,37 @@ public static class numpy {
             alterb[i] = new double[1]{b[i]};
 
         
-        aRet = numpy.matrixMult(a,b);
+        aRet = numpy.matrixMult_T1(altera,alterb);
         
         return aRet;
 
+    }
+
+    static public double[][] matrixMult(double[][] a, double[][] b){
+        double[][] aT = numpy.traspose(a);
+        double[][] aRet;
+        aRet = numpy.matrixMult_T1(aT, b);
+        return aRet;
+    }
+
+    static public double[][] matrixMult(double[][] a, double[] b){
+        double[][] alterB = new double[1][];
+        double[][] aRet;
+
+        alterB[0] = b;
+
+        aRet = matrixMult(a,alterB);
+        return aRet;
+    }
+
+    static public double[] hadamart(double[] a, double[] b){
+        Int32 i, l = a.Length;
+        double[] aRet = new double[l];
+
+        for(i = 0; i < l; i ++)
+            aRet[i] = a[i]*b[i];
+
+        return aRet;
     }
 
 	static public double[][] traspose(double[][] a){
@@ -193,24 +220,26 @@ public class NeuronsLayer{
     public double[][] inputs = new double[1][]; //1 x number of inputs
     public double[][] weights; //number of neurons x number of inputs
     public double[] biases; //number of neurons 
-    public double[][] tmp //number of neurons x 0
+    public double[][] tmp; //number of neurons x 0
     public double[] z; 
     public double[] activation; //number of neurons
     //-------- helper
     public double[] z_prime; //number of neurons
-    public double[][] nabla_w; //number of neurons x number of 
+    public double[][] nabla_w; //number of neurons x number of
+    public double[][] nabla_w_tmp;
+
     public double[] nabla_b; //number of neurons
+    public double[] nabla_b_tmp;
  
- 
-    static public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons){
+    public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons){
         this.nInput = pnInputs;
         this.nNeurons = pnNeurons;
 
-        this.inputs[] = new double[pnInputs];
+        this.inputs[0] = new double[pnInputs];
         this.weights = new double[pnNeurons][];
        // this.nabla_w = new double[pnNeurons][];
         for(Int32 i = 0; i < pnInputs; i ++){
-            this.weight[i] = numpy.randn1(pnInputs);
+            this.weights[i] = numpy.randn1(pnInputs);
            // this.nabla_w[i] = new double[pnInputs];
         }
 
@@ -224,13 +253,29 @@ public class NeuronsLayer{
         this.activation = new double[pnNeurons];
         this.z_prime = new double[pnNeurons];
     }
+
+    public void cleanNablaTmp(){
+        nabla_b_tmp = new double[nNeurons];
+        for(Int32 i = 0; i < nNeurons; i ++)
+            nabla_b_tmp[i] = 0;
+
+        nabla_w_tmp = new double[nNeurons][];
+        for(Int32 i = 0; i < nNeurons; i ++){
+            nabla_w_tmp[i] = new double[nInput];
+            for(Int32 j = 0; j < nInput; j++)
+                nabla_w_tmp[i][j]=0;
+        }
+
+
+    }
 }
 
 
 public class NeuralNetwork
 {
     private Int32 _nLayers;
-    private neuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
+    private Int32 _nInputs;
+    private NeuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
     private double _learningRate = -0.5;
 
     static public NeuralNetwork getFromFile(string fileName){
@@ -241,7 +286,7 @@ public class NeuralNetwork
         NeuralNetwork oRet;
 
         inputs = oReader.ReadInt32(); //number of inputs
-        oReader.ReadInt32(); //number or layers (first dimention) for _inputs[n]
+        oReader.ReadInt32(); //nothing ... just backward compatibility
         layersNumber = oReader.ReadInt32(); //number of layers for _nLayers;
 
         creationParams = new Int32[layersNumber+1];
@@ -266,11 +311,11 @@ public class NeuralNetwork
         for(Int32 i = 0; i < _nLayers; i ++){
             lNeurons = oReader.ReadInt32(); //number of neurons for this layer
             for(Int32 j = 0; j < lNeurons; j++){
-                _layers[i][j].bias = oReader.ReadDouble(); //bias
-                oReader.ReadInt32(); //feedback array size
+                _layers[i].biases[j] = oReader.ReadDouble(); //bias
+                oReader.ReadInt32(); //nothing, just backward compatibility
                 lWeights = oReader.ReadInt32(); //number of weights for this neuron
                 for(Int32 k = 0; k < lWeights; k++)
-                    _layers[i][j].weights[k]=oReader.ReadDouble();
+                    _layers[i].weights[j][k]=oReader.ReadDouble();
             }
         }
     }
@@ -289,24 +334,24 @@ public class NeuralNetwork
                 //weights 
 
         oWritter.Write(_nInputs);
-        oWritter.Write(_inputs.Length);
+        oWritter.Write(1); //do nothing, just backward compatibility ///// oWritter.Write(_inputs.Length);
         oWritter.Write(_nLayers);
 
         //we write the number of neurons of every layer, this is important for the loading from file.
         for(Int32 i = 0; i < _nLayers; i ++)
-            oWritter.Write(_layers[i].Length);
+            oWritter.Write(_layers[i].nNeurons);
 
         //now, for every layer, we write number of neurons and then the neurons
         for(Int32 i = 0; i < _nLayers; i ++){
-            oWritter.Write(_layers[i].Length); //number of neurons for this layer
+            oWritter.Write(_layers[i].nNeurons); //number of neurons for this layer
             //for every neuron, we write its values
-            for(Int32 j = 0; j < _layers[i].Length; j ++){
-                oWritter.Write(_layers[i][j].bias); //we write the bias
-                oWritter.Write(_layers[i][j].errorFeedback.Length); //the size of error feedback array
+            for(Int32 j = 0; j < _layers[i].nNeurons; j ++){
+                oWritter.Write(_layers[i].biases[j]); //we write the bias
+                oWritter.Write(1); //do nothing, just backward compatibility ///////////oWritter.Write(_layers[i][j].errorFeedback.Length); //the size of error feedback array
                 //now the number of weights and the weights
-                oWritter.Write(_layers[i][j].weights.Length);
-                for(Int32 k = 0; k < _layers[i][j].weights.Length; k ++)
-                    oWritter.Write(_layers[i][j].weights[k]);
+                oWritter.Write(_layers[i].weights[j].Length);
+                for(Int32 k = 0; k < _layers[i].weights[j].Length; k ++)
+                    oWritter.Write(_layers[i].weights[j][k]);
             }
         }
 
@@ -325,14 +370,15 @@ public class NeuralNetwork
      * */
     public NeuralNetwork(params Int32[] IHlO)
     {
-        Int32 nNeurons, nNeuronsAnt;
+//        Int32 nNeurons, nNeuronsAnt;
 
         //configuring input information
+        _nInputs = IHlO[0];
         _nLayers = IHlO.Length - 1;
-        _layers = new neuronsLayer[_nLayers];
+        _layers = new NeuronsLayer[_nLayers];
 
 
-        for(Int32 i = 0; i < _nLayers)
+        for(Int32 i = 0; i < _nLayers; i ++)
             _layers[i] = new NeuronsLayer(IHlO[i],IHlO[i+1]);
 
     }
@@ -344,12 +390,12 @@ public class NeuralNetwork
         var iterations = Enumerable.Range(0, current.nNeurons);
         var pquery = from num in iterations.AsParallel() select num;
 
-        numpy.matrixMult(current.inputs, current.weights, current.tmp);
+        numpy.matrixMult_T1(current.inputs, current.weights, ref current.tmp);
         pquery.ForAll((e)=>{ current.z[e]=current.tmp[e][0] + current.biases[e];
                              current.activation[e] = this.Sigmoid(current.z[e]);
                              current.z_prime[e] = this.SigmoidDerivative(current.activation[e]);
                              });
-        
+        return current.activation;
     }
 
     public double[] Feedfordward(double[] inputs)
@@ -358,46 +404,11 @@ public class NeuralNetwork
         _layers[0].inputs[0]=inputs;
         activateLayer(0);
 
-        for (i = 1; i < _nLayers; i++){
-            _layers[i].inputs[0]=_layers[i-1];
+        for (Int32 i = 1; i < _nLayers; i++){
+            _layers[i].inputs[0]=_layers[i-1].activation;
             activateLayer(i);
         }
         return Activation;
-    }
-
-    /// <summary>
-    /// adjust weights of a neuron and return the "error feedback" for each weight usefull for the previous neuron layer
-    /// </summary>
-    /// <param name="i">layer</param>
-    /// <param name="error">array</param>
-    /// <returns></returns>
-    private double[] adjustWeightsAndBias(Int32 i, double[] error )
-    {
-        Int32 i, l;
-        NeuronsLayer current = _layers[i];
-
-        l = current.nNeurons;
-        for(i = 0; i < l; i ++){
-            current.delta[i] = (error[i])*this.SigmoidDerivative(current.z[i]);
-        }
-
-
-        Int32 i,
-            l = neuron.weights.Length;
-            Console.WriteLine("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< {0} >>>>>>>>>>>>>>>>>>>>>>>>>>", neuron.z);
-        double derivativeError = SigmoidDerivative(neuron.output)*error;
-        double[] errorFeedback = neuron.errorFeedback;
-
-        for (i = 0; i < l; i++)
-        {
-            errorFeedback[i] = derivativeError * neuron.weights[i];
-            neuron.weights[i] -= (derivativeError * inputs[i] * _learningRate); 
-            
-        }
-
-        neuron.bias -= (derivativeError * _learningRate); 
-
-        return errorFeedback;
     }
 
     public void BackProp(double[] desiredValues)
@@ -405,8 +416,6 @@ public class NeuralNetwork
         
         Int32 i, l;
         NeuronsLayer current = _layers[_nLayers-1]; // we start with the last layer
-        double[][] nabla_b = new double[_nLayers][];
-        double[][][] nabla_w = new double[_nLayers][][];
         double[] delta = new double[current.nNeurons];
 
         l = current.nNeurons;
@@ -416,39 +425,15 @@ public class NeuralNetwork
         current.nabla_b = delta;
         current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
 
-
+        //and we work on every previous layer by using the weights of the next layer
 
         for(i = _nLayers-2; i >=0; i--){
-            
+            current = _layers[i];
+            delta =numpy.hadamart(numpy.matrixMult(_layers[i+1].weights, delta)[0], current.z_prime);
+            current.nabla_b = delta;
+            current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
         }
-        ------------------------------------------------------
-        double[] errors = new double[desiredValues.Length];
-        Int32 i, j, k, l = errors.Length;
-        struNeuron[] neurons;
 
-        //lets calculate the error from the activation
-        for (i = 0; i < l; i++)
-            errors[i] = desiredValues[i] - Activation[i];
-
-        //we adjust the weights and bias of the last layer
-        i = _nLayers - 1;
-        neurons = _layers[i];
-        l = neurons.Length;
-        for (j = 0; j < l; j++)
-            adjustWeightsAndBias(errors[j], ref neurons[j], _inputs[i]);
-
-
-        //now we ajust the rest of layers
-        for (i = _nLayers - 2; i >= 0; i--)
-        {
-            neurons = _layers[i];
-            l = neurons.Length;
-            for (j = 0; j < l; j++)
-                //every neuron in this layer is the j-th input in every neuron in the next layer
-                //So we correct the weight and bias based on the error returned from every neuron in the next layer
-                for (k = 0; k < _layers[i + 1].Length; k++)
-                    adjustWeightsAndBias(_layers[i + 1][k].errorFeedback[j], ref neurons[j], _inputs[i]);
-        }
     }
 
     private double Sigmoid(double z)
@@ -489,16 +474,56 @@ public class NeuralNetwork
         Console.WriteLine(texto.ToString());
 //        System.Threading.Thread.Sleep(10);
     }
+
+    //TODO
     public void pseudoTrain(double[] inputs, double[] desired)
     {
+        //we do a feedforward
         Feedfordward(inputs);
-        Feedbackward(desired);
+        //then calculate some "nablas" for weights and biases
+        BackProp(desired);
+
+        //now we adjust weights and biases
+
+
+
+    }
+
+    private void cleanNablaTmp(){
+        for(Int32 i = 0; i < _nLayers; i++)
+            _layers[i].cleanNablaTmp();
+    }
+
+    private void adjustWeightsAndBiases(Int32 pIndex, double pSamplesNumber, double pLearningRate){
+        NeuronsLayer current = _layers[pIndex];
+        Int32 i, j;
+        //adjust biases
+        for(i = 0; i < current.nNeurons; i++){
+            current.nabla_b_tmp[i]+=current.nabla_b[i];
+            current.biases[i]-=((pLearningRate/pSamplesNumber)*current.nabla_b_tmp[i]);
+        }
+
+        for(i = 0; i < current.nNeurons; i++)
+            for(j = 0; j < current.nInput; j ++){
+                current.nabla_w_tmp[i][j]+=current.nabla_w[i][j];
+                current.weights[i][j]-=((pLearningRate/pSamplesNumber)*current.nabla_w_tmp[i][j]);
+            }
     }
 
     public void pseudoTrainSet(double[][] inputs, double[][] desired)
     {
-        for (Int32 i = 0; i < inputs.Length; i++)  
-            pseudoTrain(inputs[i], desired[i]);
+        cleanNablaTmp();
+        
+        for (Int32 i = 0; i < inputs.Length; i++){
+            //we create a result
+            Feedfordward(inputs[i]);
+            //we prepare a backpropagation
+            BackProp(desired[i]);
+            //now we calculate and change biases and weights
+
+            for(Int32 iLayer = 0; iLayer < _nLayers; iLayer++ )
+                adjustWeightsAndBiases(iLayer, inputs.Length, this._learningRate);
+        }
     }
 }
 
