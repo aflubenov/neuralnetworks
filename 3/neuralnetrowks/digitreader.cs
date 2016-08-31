@@ -44,6 +44,7 @@ public class inicio
         double numb = 0;
         readMNist digits = new readMNist("t10k-labels.idx1-ubyte", "t10k-images.idx3-ubyte");
         Int32 tmp = 0;
+        double digitsReaded = 0.0, digitsMached = 0.0;
 
         //digit = imgToDouble(digitImageBitmap);
      
@@ -66,7 +67,10 @@ public class inicio
                 numb = i;
             }
         
-            Console.Write(" Es un {0} ???? ", numb);
+        digitsReaded +=1.0;
+        if(numb == tmp) digitsMached += 1.0;
+          
+        Console.Write(" Es un {0} ????     Aciertos: {1:N0} de {2:N0}= {3:N2}%", numb, digitsMached, digitsReaded, (digitsMached/digitsReaded)*100.0 );
 
         Console.WriteLine("\n");
         Console.ReadLine();

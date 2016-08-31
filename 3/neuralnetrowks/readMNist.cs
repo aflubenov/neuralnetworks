@@ -44,7 +44,7 @@ using System.IO;
                         for (int j = 0; j < 28; ++j)
                         {
                             byte b = brImages.ReadByte();
-                            pixels[i][j] = b;
+                            pixels[i][j] = b > 0?1:0;
                         }
                     }
 

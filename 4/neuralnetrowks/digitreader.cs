@@ -72,7 +72,32 @@ public class inicio
         
         //recognizeOneLetter();
 
-        recognizeDigits("recognizeHandWritedDigits.bin", args[0]);
+        //recognizeDigits("recognizeHandWritedDigits.bin", args[0]);
 
+        double[][] a = new double[3][]; //3 columns, 4 rows
+        double[][] b = new double[2][]; //2 rows, 4 columns
+        double[][] c = new double[2][]; //2 rows, 3 columns  
+
+        a[0] = new double[4]{1,2,3,4};
+        a[1] = new double[4]{5,6,7,8};
+        a[2] = new double[4]{9,8,7,6};
+        
+        b[0] = new double[4]{1,2,3,4};
+        b[1] = new double[4]{5,6,7,8};
+
+        c[0] = new double[3];
+        c[1] = new double[3];
+
+        
+        numpy.matrixMult(a,b,ref c);
+
+        Console.Write("\n\n\n");
+        for(Int32 i= 0; i < 2; i ++){
+            for(Int32 j = 0; j < 3; j ++ )
+                Console.Write("[{0}]  ", c[i][j]);
+            Console.Write("\n");
+        }
+
+        Console.Write("\n\n\n");
     }
 }

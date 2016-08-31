@@ -364,7 +364,7 @@ public class NeuralNetwork
     public void FeedfordwardSet(double[][] inputs, double[][] desired, Int32 samplesToLearn)
     {
         
-        System.Text.StringBuilder texto = new System.Text.StringBuilder("");
+       // System.Text.StringBuilder texto = new System.Text.StringBuilder("");
         double[] salida;
         System.Text.StringBuilder[] esperado = new System.Text.StringBuilder[desired.Length];
 
@@ -375,19 +375,29 @@ public class NeuralNetwork
         }
 
 
+        Console.SetCursorPosition(0,0);
         for(Int32 i = 0; i < samplesToLearn; i++)
         {
             salida = Feedfordward(inputs[i]);
             //texto.Clear();
-            for(Int32 j = 0; j < salida.Length; j ++)
-                texto.Append(String.Format(" {0:N9}", salida[j]));
+            for(Int32 j = 0; j < salida.Length; j ++){
+                if(desired[i][j]==1.0){
+                    Console.BackgroundColor = ConsoleColor.DarkGreen;
+	                Console.ForegroundColor = ConsoleColor.Gray;
+                } 
+                                //texto.Append(String.Format(" {0:N9}", salida[j]));
+                Console.Write(String.Format(" {0:N9}", salida[j]));
+                Console.BackgroundColor = ConsoleColor.Black;
+	            Console.ForegroundColor = ConsoleColor.Gray;
+
+            }
             //Console.WriteLine(texto) ;
-            texto.Append(esperado[i].ToString()+"\n");
+            //texto.Append(esperado[i].ToString()+"\n");
+            Console.Write(esperado[i].ToString()+"\n");
         }
-        Console.SetCursorPosition(0,0);
+
         
-        Console.WriteLine(texto.ToString());
-//        System.Threading.Thread.Sleep(10);
+        //Console.WriteLine(texto.ToString());
     }
     public void pseudoTrain(double[] inputs, double[] desired)
     {

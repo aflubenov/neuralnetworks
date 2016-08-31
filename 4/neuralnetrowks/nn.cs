@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
 
 public static class numpy {
 	static Random rand = new Random(); //reuse this if you are generating many
@@ -55,6 +56,60 @@ public static class numpy {
 
 		return ret;
 	}
+
+    /**
+     * for the record: a[colIndex][colVector]
+     *                 b[rowIndex][rowVector]
+     *
+     *    outRes should be: outRes[rowIndex][rowVector]
+     */
+    static public double[][] matrixMult(double[][] a, double[][] b, ref double[][] outRes){
+        Int32 li = a.Length;
+        Int32 lj = b.Length;
+        double[][] aTmp = outRes;
+
+        var iterations = Enumerable.Range(0, li*lj);
+        var pquery = from num in iterations.AsParallel() select num;
+
+        pquery.ForAll((e) => { Int32 row = e/li, col = e%li;  aTmp[row][col] = numpy.dot(a[col], b[row]);} );
+
+        outRes = aTmp;
+
+        return outRes;
+    }
+
+    static public double[][] matrixMult(double[][] a, double[][] b){
+        Int32 l = b.Length;
+        Int32 la = a.Length;
+        double[][] aRet = new double[l][];
+
+        for(Int32 i = 0; i < l; i ++)
+            aRet[i] = new double[la];
+
+        numpy.matrixMult(a,b, ref aRet);
+
+        return aRet;
+    }
+
+    static public double[][] matrixMult(double[] a, double[] b){
+        Int32 lb = b.Length;
+        Int32 la = a.Length;
+        double[][] altera = new double[la][];
+        double[][] alterb = new double[lb][];
+        double[][] aRet;
+
+        for(Int32 i = 0; i < la; i ++)
+            altera[i] = new double[1]{a[i]};
+
+        for(Int32 i = 0; i < lb; i ++)
+            alterb[i] = new double[1]{b[i]};
+
+        
+        aRet = numpy.matrixMult(a,b);
+        
+        return aRet;
+
+    }
 
 	static public double[][] traspose(double[][] a){
 		double[][] ret = new double[a[0].Length][];
@@ -132,15 +187,50 @@ struct struNeuron
     public double output;
 }
 
+public class NeuronsLayer{
+    public Int32 nInput = 0;
+    public Int32 nNeurons = 0;
+    public double[][] inputs = new double[1][]; //1 x number of inputs
+    public double[][] weights; //number of neurons x number of inputs
+    public double[] biases; //number of neurons 
+    public double[][] tmp //number of neurons x 0
+    public double[] z; 
+    public double[] activation; //number of neurons
+    //-------- helper
+    public double[] z_prime; //number of neurons
+    public double[][] nabla_w; //number of neurons x number of 
+    public double[] nabla_b; //number of neurons
+ 
+ 
+    static public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons){
+        this.nInput = pnInputs;
+        this.nNeurons = pnNeurons;
+
+        this.inputs[] = new double[pnInputs];
+        this.weights = new double[pnNeurons][];
+       // this.nabla_w = new double[pnNeurons][];
+        for(Int32 i = 0; i < pnInputs; i ++){
+            this.weight[i] = numpy.randn1(pnInputs);
+           // this.nabla_w[i] = new double[pnInputs];
+        }
+
+        this.tmp = new double[pnNeurons][];
+        for(Int32 i = 0; i < pnNeurons; i ++)
+            this.tmp[i] = new double[1]{0};
+
+        this.biases = numpy.randn1(pnNeurons);
+        this.nabla_b = new double[pnNeurons];
+        this.z = new double[pnNeurons];
+        this.activation = new double[pnNeurons];
+        this.z_prime = new double[pnNeurons];
+    }
+}
 
 
 public class NeuralNetwork
 {
-    private Int32 _nInputs;//number of inputs for the ANN
-    private double[][] _inputs; //inputs per layer, including the ANN input, _inputs[n] is the input for the n-th hidden layer, the last element of the array is the output
-
     private Int32 _nLayers;
-    private struNeuron[][] _layers; //every layer has and arvitrary number of neurons
+    private neuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
     private double _learningRate = -0.5;
 
     static public NeuralNetwork getFromFile(string fileName){
@@ -227,7 +317,7 @@ public class NeuralNetwork
 
     public double[] Activation
     {
-        get { return _inputs[_inputs.Length-1]; }
+        get { return _layers[_nLayers-1].activation; }
     }
 
     /***
@@ -238,75 +328,60 @@ public class NeuralNetwork
         Int32 nNeurons, nNeuronsAnt;
 
         //configuring input information
-        _nInputs = IHlO[0];
-        _inputs = new double[IHlO.Length][];
         _nLayers = IHlO.Length - 1;
+        _layers = new neuronsLayer[_nLayers];
 
-        //configuring hidden layers
-        _layers = new struNeuron[_nLayers][];
 
-        nNeuronsAnt = _nInputs;
-        for (Int32 i = 0; i < _nLayers; i++)
-        {
-            nNeurons = IHlO[i+1];
-            _layers[i] = new struNeuron[nNeurons];
-            for(Int32 j = 0; j < nNeurons; j++)
-            {
-                _layers[i][j].weights = numpy.randn1(nNeuronsAnt);
-                _layers[i][j].errorFeedback = new double[nNeuronsAnt];
-                _layers[i][j].bias = numpy.randGauss();
-            }
-            nNeuronsAnt = nNeurons;
-        }
+        for(Int32 i = 0; i < _nLayers)
+            _layers[i] = new NeuronsLayer(IHlO[i],IHlO[i+1]);
+
     }
 
-    private double[] activateLayer(double[] inputs, Int32 layerNumber)
+    private double[] activateLayer( Int32 i)
     {
-        Int32 l = _layers[layerNumber].Length;
-       // struNeuron neuron;
-        double[] aRet = new double[l];
-        Task[] tasks = new Task[l];
 
-        for (Int32 i = 0; i < l; i++)
-        {
-            Int32 ii  = i;
-            tasks[i] = Task.Factory.StartNew(() => {
-                struNeuron neuron = _layers[layerNumber][ii];
-                
-                neuron.z = numpy.dot(neuron.weights, inputs) + neuron.bias;
-                neuron.output = Sigmoid(neuron.z);
-                
-                _layers[layerNumber][ii].z = neuron.z;
-                _layers[layerNumber][ii].output = neuron.output;
-                aRet[ii] = neuron.output;
-            });
-        }
+        NeuronsLayer current = _layers[i];
+        var iterations = Enumerable.Range(0, current.nNeurons);
+        var pquery = from num in iterations.AsParallel() select num;
 
-        Task.WaitAll(tasks);
-
-        return aRet;
+        numpy.matrixMult(current.inputs, current.weights, current.tmp);
+        pquery.ForAll((e)=>{ current.z[e]=current.tmp[e][0] + current.biases[e];
+                             current.activation[e] = this.Sigmoid(current.z[e]);
+                             current.z_prime[e] = this.SigmoidDerivative(current.activation[e]);
+                             });
+        
     }
 
     public double[] Feedfordward(double[] inputs)
     {
-        _inputs[0] = inputs;
-        Int32 i;
 
-        for (i = 0; i < _nLayers; i++)
-            _inputs[i+1] = activateLayer(_inputs[i], i);
+        _layers[0].inputs[0]=inputs;
+        activateLayer(0);
 
+        for (i = 1; i < _nLayers; i++){
+            _layers[i].inputs[0]=_layers[i-1];
+            activateLayer(i);
+        }
         return Activation;
     }
 
     /// <summary>
     /// adjust weights of a neuron and return the "error feedback" for each weight usefull for the previous neuron layer
     /// </summary>
-    /// <param name="error"></param>
-    /// <param name="neuron"></param>
-    /// <param name="inputs"></param>
+    /// <param name="i">layer</param>
+    /// <param name="error">array</param>
     /// <returns></returns>
-    private double[] adjustWeightsAndBias(double error, ref struNeuron neuron, double[] inputs)
+    private double[] adjustWeightsAndBias(Int32 i, double[] error )
     {
+        Int32 i, l;
+        NeuronsLayer current = _layers[i];
+
+        l = current.nNeurons;
+        for(i = 0; i < l; i ++){
+            current.delta[i] = (error[i])*this.SigmoidDerivative(current.z[i]);
+        }
+
+
         Int32 i,
             l = neuron.weights.Length;
             Console.WriteLine("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< {0} >>>>>>>>>>>>>>>>>>>>>>>>>>", neuron.z);
@@ -325,8 +400,28 @@ public class NeuralNetwork
         return errorFeedback;
     }
 
-    public void Feedbackward(double[] desiredValues)
+    public void BackProp(double[] desiredValues)
     {
+        
+        Int32 i, l;
+        NeuronsLayer current = _layers[_nLayers-1]; // we start with the last layer
+        double[][] nabla_b = new double[_nLayers][];
+        double[][][] nabla_w = new double[_nLayers][][];
+        double[] delta = new double[current.nNeurons];
+
+        l = current.nNeurons;
+        for(i = 0; i < l; i ++)
+            delta[i] = (current.activation[i] - desiredValues[i])*current.z_prime[i];
+        
+        current.nabla_b = delta;
+        current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
+
+
+
+        for(i = _nLayers-2; i >=0; i--){
+            
+        }
+        ------------------------------------------------------
         double[] errors = new double[desiredValues.Length];
         Int32 i, j, k, l = errors.Length;
         struNeuron[] neurons;
