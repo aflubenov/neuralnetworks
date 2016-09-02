@@ -119,7 +119,7 @@ public class inicio
                 return false;
 
             n.FeedfordwardSet(aInputs, aDesired, l);
-            Console.SetCursorPosition(0,l+3);        
+            Console.SetCursorPosition(0,l+10);        
             Console.WriteLine("Training Epoc # {0} of {1})....",iterations, epocs);
                 
         }
@@ -238,7 +238,7 @@ public class inicio
         Int32 tmp = 0;
 
         if(fileName.Length == 0 || (!File.Exists(fileName) && !File.Exists(fileName+"bkup")))
-            myNet = new NeuralNetwork( 784, 128, 64 ,32, 28 );
+            myNet = new NeuralNetwork( 784, 100, 28 );
         else if(File.Exists(fileName+"bkup"))
             myNet = NeuralNetwork.getFromFile(fileName+"bkup"); // new NeuralNetwork( 784, 15, 10 );
         else 
@@ -258,7 +258,7 @@ public class inicio
                 //desired[i][tmp]=1;
             }
 
-            Console.SetCursorPosition(0,samples+10);
+            Console.SetCursorPosition(0,samples+15);
             Console.WriteLine("Training sample set #{0}...", samplesLearned );
             
             wannaStop = !pseudoTrainSetByEpocs(tryiningData, desired, myNet, epocs, fileName, lambdaRegParam);

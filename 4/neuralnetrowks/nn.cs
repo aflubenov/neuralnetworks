@@ -487,7 +487,7 @@ public class NeuralNetwork
                     Console.ForegroundColor = ConsoleColor.Gray;
                 }
                 //texto.Append(String.Format(" {0:N9}", salida[j]));
-                Console.Write(String.Format(" {0:N5}", salida[j]));
+                Console.Write(String.Format(" {0:N8}", salida[j]));
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Gray;
 
@@ -534,7 +534,7 @@ public class NeuralNetwork
 
             for (Int32 j = 0; j < current.nInput; j++)
             {
-                current.weights[i][j] = (1.0 - ((pLearningRate*lambdaRegParam)/pSamplesNumber))*current.weights[i][j] - 
+                current.weights[i][j] = (1.0 - ((pLearningRate*lambdaRegParam)/pSamplesNumber))* current.weights[i][j] - 
                                                 ((pLearningRate / pSamplesNumber) * current.nabla_w_tmp[i][j]);
                 sqareWeightsTmp[i]+= (current.weights[i][j]*current.weights[i][j]);
             }
