@@ -163,7 +163,7 @@ public class inicio
 //        Int32 iterations = 0;
 
         if(fileName.Length == 0 || (!File.Exists(fileName) && !File.Exists(fileName+"bkup")))
-            myNet = new NeuralNetwork( 784, 40, 20, 10 );
+            myNet = new NeuralNetwork( 784, 128, 64, 32, 16, 10 );
         else if(File.Exists(fileName+"bkup"))
             myNet = NeuralNetwork.getFromFile(fileName+"bkup"); // new NeuralNetwork( 784, 15, 10 );
         else 

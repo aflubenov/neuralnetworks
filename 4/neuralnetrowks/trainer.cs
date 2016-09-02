@@ -51,49 +51,52 @@ public class inicio
     }
 
 
-    public static double[] letterToArray(Int32 letterIndex)
-    {
-        double[] aRet = new double[27];
-        aRet[letterIndex] = 1;
-        return aRet;
-    }
-
-    public static double[] letterToArray(String letter)
-    {
-        return letterToArray(Convert.ToInt32(letterToDouble(letter)) - 97);
-    }
 
 
-    public static bool pseudoTrainSetUntilNumber(double[][] inputs, double[][] desired, NeuralNetwork n, double presission, Int32 samplesToLearn)
+    //we evaluate with a "quadratic" cost function plus a regularization. 
+    public static double pseudoTrainSetAndEvaluateCost(double[][] inputs, double[][] desired, NeuralNetwork n, double samplesToLearn, double lambdaRegParam)
     {
         double acumSum = 0.0;
         double tmp = samplesToLearn * 2.0;
-        //(1 / 2*n)*Sum( mod(desired-activation)^2) where n = number of training cases, and the sum is over every training case.
-        n.pseudoTrainSet(inputs, desired);
+        double[] results = new double[(Int32)samplesToLearn];
+        double sumSquaredWeights = 0;
+        //quadratic cost: (1 / 2*n)*Sum( mod(desired-activation)^2) where n = number of training cases, and the sum is over every training case.
+        //regularization part: (lambda / 2*n)*sum(weights^2)
+
+        //final formula: quadratic cost + regularization
+        sumSquaredWeights =  n.pseudoTrainSetSGD(inputs, desired, lambdaRegParam);
         for (Int32 i = 0; i < samplesToLearn; i++)
         {
-            acumSum = acumSum + numpy.absSqr(numpy.add(desired[i], numpy.scalar(n.Feedfordward(inputs[i]), -1.0)));
+            results[i] = numpy.absSqr(numpy.add(desired[i], numpy.scalar(n.Feedfordward(inputs[i]), -1.0)));
+            acumSum = acumSum + results[i];
 
         }
 
-        return acumSum <= (1.0/tmp)*presission;
+        return (1.0/tmp)*acumSum + ((lambdaRegParam/tmp)*sumSquaredWeights);
     }
 
-    public static bool pseudoTrainSetByEpocs(double[][] inputs, double[][] desired, NeuralNetwork n, double presission, Int32 epocs, string fileName)
+    private static Int32 _getMaxIndexFromResults(double[] p){
+        Int32 i, l = p.Length;
+        Int32 index = -1;
+        double max = double.MinValue;
+
+        for(i = 0; i < l; i ++)
+            if(p[i] > max){
+                max = p[i];
+                index = i;
+            }
+
+        return index;
+    }
+
+    public static bool pseudoTrainSetByEpocs(double[][] inputs, double[][] desired, NeuralNetwork n, 
+                                Int32 epocs, string fileName, double lambdaRegParam)
     {
         Int32[][] indexes = new Int32[inputs.Length][];
-        double[][] aEpocsInputs = new double[epocs][];
-        double[][] aEpocsDesired = new double[epocs][];
         Int32 i = 0, l = inputs.Length;
-        Int32 nEpocs = l/epocs;
-        Int32 iterations = nEpocs*150;
-        Int32 epocIterations = 0;
-        Int32 lastTotalIterations = 0;
-
-        if(l % epocs != 0){
-            Console.WriteLine("ahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh not multiples!!!!");
-            return false;
-        }
+        Int32 iterations = 0;
+        double[][] aInputs = new double[l][];
+        double[][] aDesired = new double[l][];
 
 
         //we set this to suffle indexes
@@ -101,53 +104,128 @@ public class inicio
             indexes[i] = new Int32[1]{i};
 
         //now we are to train by epocs
-        while(iterations > nEpocs*100){
-            lastTotalIterations = iterations;
-            iterations = 0;
+        for(iterations = 0; iterations < epocs; iterations ++){
             //suffling inputs
             indexes = shuffle<Int32>(indexes);
 
-            for(i = 0; i < nEpocs; i ++){
-                //creating the epoc
-                for(Int32 j = 0; j < epocs; j ++){
-                    aEpocsInputs[j] = inputs[indexes[i*epocs+j][0]];
-                    aEpocsDesired[j] = desired[indexes[i*epocs+j][0]];
-                }
-
-                //we train it
-                epocIterations = 0;
-                for(;!pseudoTrainSetUntilNumber(aEpocsInputs, aEpocsDesired, n, presission, epocs);){
-                    if(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                        return false;
-
-                    n.FeedfordwardSet(aEpocsInputs, aEpocsDesired, epocs);
-                    Console.SetCursorPosition(0,epocs+3);
-                    iterations ++;
-                    epocIterations++;
-                    Console.SetCursorPosition(0,epocs+3);
-                    Console.WriteLine("Training Epoc # {0} of {1}, {3} Iteration ({2} total iterations so far)....",i,nEpocs, iterations, epocIterations );
-/*
-                    if(i == 0 && iterations > lastTotalIterations/2){
-                        Console.WriteLine("Toooo much first iteration, skiping...." );                        
-                        break;
-                    } else*/
-                     if(epocIterations > 150){ // 200 && epocIterations > (iterations / (i+1)) ){
-                                Console.WriteLine("Skiping Epoc #{0} due to a lot of iterations ({1}))....",i,epocIterations );                        
-                                break;
-                    }
-
-                }
-                n.saveToFile(fileName+"bkup");    
+            for(i = 0; i < l; i ++){
+                aInputs[i] = inputs[indexes[i][0]];
+                aDesired[i] = desired[indexes[i][0]];
             }
-            n.saveToFile(fileName);
+
+            //we train it
+            pseudoTrainSetAndEvaluateCost(aInputs, aDesired, n, l, lambdaRegParam);
+            if(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                return false;
+
+            n.FeedfordwardSet(aInputs, aDesired, l);
+            Console.SetCursorPosition(0,l+3);        
+            Console.WriteLine("Training Epoc # {0} of {1})....",iterations, epocs);
+                
         }
+        n.saveToFile(fileName+"bkup");
 
         return true;
         
     }
 
+    private static double[] getDigits(Int32 i){
+        double[][] aRet = new double[10][];
 
-    private static void recognizeDigits(string fileName, Int32 samples, Int32 epocs, double presission)
+        aRet[0] = new double[28]{0,1,1,0,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 };
+                                
+        aRet[1] = new double[28]{0,0,1,0,
+                                 0,1,1,0,
+                                 1,0,1,0,
+                                 0,0,1,0,
+                                 0,0,1,0,
+                                 0,0,1,0,
+                                 0,0,1,0,
+                                 };
+
+        aRet[2] = new double[28]{0,1,1,1,
+                                 1,0,0,1,
+                                 0,0,0,1,
+                                 0,0,1,0,
+                                 0,1,0,0,
+                                 1,0,0,0,
+                                 1,1,1,1,
+                                 };
+
+        aRet[3] = new double[28]{0,1,1,0,
+                                 1,0,0,1,
+                                 0,0,0,1,
+                                 0,1,1,0,
+                                 0,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 };
+        aRet[4] = new double[28]{1,0,0,1,
+                                 1,0,0,1,
+                                 1,1,1,1,
+                                 0,0,0,1,
+                                 0,0,0,1,
+                                 0,0,0,1,
+                                 0,0,0,1,
+                                 };
+
+        aRet[5] = new double[28]{1,1,1,1,
+                                 1,0,0,0,
+                                 1,1,1,0,
+                                 0,0,0,1,
+                                 0,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 };
+
+        aRet[6] = new double[28]{0,1,1,0,
+                                 1,0,0,0,
+                                 1,0,0,0,
+                                 1,1,1,0,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 };
+        aRet[7] = new double[28]{0,1,1,1,
+                                 1,0,0,1,
+                                 0,0,1,0,
+                                 0,0,1,0,
+                                 0,0,1,0,
+                                 0,1,0,0,
+                                 0,1,0,0,
+                                 };
+
+        aRet[8] = new double[28]{0,1,1,0,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,0,
+                                 };
+
+        aRet[9] = new double[28]{0,1,1,0,
+                                 1,0,0,1,
+                                 1,0,0,1,
+                                 0,1,1,1,
+                                 0,0,0,1,
+                                 0,0,0,1,
+                                 0,1,1,0,
+                                 };
+
+        return aRet[i];
+
+    }
+
+
+    private static void recognizeDigits(string fileName, Int32 samples, Int32 epocs, double lambdaRegParam)
     {
         NeuralNetwork myNet;
         readMNist digits = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
@@ -157,13 +235,10 @@ public class inicio
         
         double[][] tryiningData = new double[samples][];
         double[][] desired = new double[samples][];
-        List<double[]> lTryingdata = new List<double[]>();
-        List<double[]> lDesired = new List<double[]>();
         Int32 tmp = 0;
-//        Int32 iterations = 0;
 
         if(fileName.Length == 0 || (!File.Exists(fileName) && !File.Exists(fileName+"bkup")))
-            myNet = new NeuralNetwork( 784, 40, 20, 10 );
+            myNet = new NeuralNetwork( 784, 128, 64 ,32, 28 );
         else if(File.Exists(fileName+"bkup"))
             myNet = NeuralNetwork.getFromFile(fileName+"bkup"); // new NeuralNetwork( 784, 15, 10 );
         else 
@@ -179,37 +254,17 @@ public class inicio
             //we get one sample 
             for(Int32 i = 0; i < samples; i ++){
                 digits.GiveNextValue(out tryiningData[i], ref tmp);
-                desired[i]=numpy.getArrayPopulated<double>(10,0);
-                desired[i][tmp]=1;
+                desired[i]= getDigits(tmp); //numpy.getArrayPopulated<double>(10,0);
+                //desired[i][tmp]=1;
             }
 
-            lTryingdata.AddRange(tryiningData);
-            lDesired.AddRange(desired);
-
-            Console.SetCursorPosition(0,epocs+10);
+            Console.SetCursorPosition(0,samples+10);
             Console.WriteLine("Training sample set #{0}...", samplesLearned );
             
-            wannaStop = !pseudoTrainSetByEpocs(lTryingdata.ToArray(), lDesired.ToArray(), myNet, presission, epocs, fileName);
-                
+            wannaStop = !pseudoTrainSetByEpocs(tryiningData, desired, myNet, epocs, fileName, lambdaRegParam);
 
-/*            iterations = 0;
-            Console.SetCursorPosition(0,samplesLearned+1);
-            Console.Write("Training sample {0}...                                                                      ", samplesLearned);
-            for (; !pseudoTrainSetUntilNumber(tryiningData, desired, myNet, 0.1, samplesLearned); ) // && iterations < maxIterations;)
-            {
-                if(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape){
-                    myNet.saveToFile(fileName+"bkup");
-                    wannaStop=true;
-                    break;
-                }
-                myNet.FeedfordwardSet(tryiningData, desired, samplesLearned);
-                iterations++;
-            }
-*/            
             myNet.saveToFile(fileName+"bkup");
             myNet.saveToFile(fileName);
-
-//            Console.WriteLine("Learned {1} samples, took {0} iterations                                                                                 \n=================================================================", iterations, samplesLearned);
 
         }
 
@@ -245,7 +300,7 @@ public class inicio
         
         //param names: samples, epocs
         if(args.Length < 3){
-            Console.WriteLine("\n\n=================\n Please use xxxxx.exe samples epocs pressision\n=========\n");
+            Console.WriteLine("\n\n=================\n Please use xxxxx.exe samples epocs lambdaRegParam\n=========\n");
             return;
         }
         recognizeDigits("recognizeHandWritedDigits.bin", Int32.Parse(args[0]), Int32.Parse(args[1]), double.Parse(args[2]));

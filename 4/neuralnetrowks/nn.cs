@@ -176,6 +176,21 @@ public static class numpy {
 
         return ret;
     }
+    static public double[][] add(double[][] a, double[][] b){
+        Int32 la = a.Length, lb = b.Length;
+        double[][] aRet = new double[la][];
+        
+
+        for(Int32 i = 0; i < la; i ++)
+            aRet[i] = new double[lb];
+
+        IEnumerable<Int32> iterations = Enumerable.Range(0, la*lb);
+        var pquery = from num in iterations.AsParallel() select num;
+
+        pquery.ForAll((e) => { Int32 row = e/lb, col = e%lb;  aRet[row][col] = a[row][col] + b[row][col];});
+
+        return aRet;
+    }
 
     static public double[] scalar(double[] a, double s){
         Int32 l = a.Length;
@@ -230,6 +245,7 @@ public class NeuronsLayer{
 
     public double[] nabla_b; //number of neurons
     public double[] nabla_b_tmp;
+    public double sumSqaresWeights;
  
     public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons){
         this.nInput = pnInputs;
@@ -274,7 +290,7 @@ public class NeuralNetwork
     private Int32 _nLayers;
     private Int32 _nInputs;
     private NeuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
-    private double _learningRate = 0.9;
+    private double _learningRate = 0.5;
 
     static public NeuralNetwork getFromFile(string fileName){
         BinaryReader oReader = new BinaryReader(File.Open(fileName,FileMode.Open));
@@ -426,7 +442,9 @@ public class NeuralNetwork
             current = _layers[i];
             delta =numpy.hadamart(numpy.matrixMult(_layers[i+1].weights, delta)[0], current.z_prime);
             current.nabla_b = delta;
+            current.nabla_b_tmp = numpy.add(current.nabla_b, current.nabla_b_tmp); //we populate temporal arrays by adding for later calculus
             current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
+            current.nabla_w_tmp = numpy.add(current.nabla_w_tmp, current.nabla_w); //we populate temporal arrays by adding for later calculus
         }
 
     }
@@ -469,14 +487,12 @@ public class NeuralNetwork
                     Console.ForegroundColor = ConsoleColor.Gray;
                 }
                 //texto.Append(String.Format(" {0:N9}", salida[j]));
-                Console.Write(String.Format(" {0:N9}", salida[j]));
+                Console.Write(String.Format(" {0:N5}", salida[j]));
                 Console.BackgroundColor = ConsoleColor.Black;
                 Console.ForegroundColor = ConsoleColor.Gray;
 
             }
-            //Console.WriteLine(texto) ;
-            //texto.Append(esperado[i].ToString()+"\n");
-            Console.Write(esperado[i].ToString() + "\n");
+          //  Console.Write(esperado[i].ToString() + "\n");
         }
 
 
@@ -503,30 +519,44 @@ public class NeuralNetwork
         pquery.ForAll((e) => _layers[e].cleanNablaTmp());
     }
 
-    private void adjustWeightsAndBiases(Int32 pIndex, double pSamplesNumber, double pLearningRate){
+    //we modify weights and biases according to the SGD plus a regularization parameter
+    private void adjustWeightsAndBiasesSGD(Int32 pIndex, double pSamplesNumber, double pLearningRate, double lambdaRegParam){
         NeuronsLayer current = _layers[pIndex];
         
         //adjust biases
-        var iterations = Enumerable.Range(0, current.nNeurons);
+        double[] sqareWeightsTmp = new double[current.nNeurons]; //temporal for sqare weights summing
+
+        IEnumerable<Int32> iterations = Enumerable.Range(0, current.nNeurons);
         var pquery = from num in iterations.AsParallel() select num;
         pquery.ForAll((i) => {
-            current.nabla_b_tmp[i] += current.nabla_b[i];
+            sqareWeightsTmp[i] = 0.0;
             current.biases[i] -= ((pLearningRate / pSamplesNumber) * current.nabla_b_tmp[i]);
 
             for (Int32 j = 0; j < current.nInput; j++)
             {
-                current.nabla_w_tmp[i][j] += current.nabla_w[i][j];
-                current.weights[i][j] -= ((pLearningRate / pSamplesNumber) * current.nabla_w_tmp[i][j]);
+                current.weights[i][j] = (1.0 - ((pLearningRate*lambdaRegParam)/pSamplesNumber))*current.weights[i][j] - 
+                                                ((pLearningRate / pSamplesNumber) * current.nabla_w_tmp[i][j]);
+                sqareWeightsTmp[i]+= (current.weights[i][j]*current.weights[i][j]);
             }
         });
 
+        current.sumSqaresWeights = 0;
+        for(Int32 i = 0; i < current.nNeurons; i ++)
+            current.sumSqaresWeights+=sqareWeightsTmp[i];
+
     }
 
-    public void pseudoTrainSet(double[][] inputs, double[][] desired)
+    //we train a set of data, we acumulate the nablas and then we
+    //adjust weights and biases by using Stocastic Gradient descent
+    //
+    //
+    //@return: the sum of the squares of every weight
+    public double pseudoTrainSetSGD(double[][] inputs, double[][] desired, double lambdaRegParam)
     {
         cleanNablaTmp();
         IEnumerable<Int32> iterations;
         Int32 l = inputs.Length;
+        double weightsSquareSum = 0;
 
         for (Int32 i = 0; i < l; i++){
             //we create a result
@@ -534,11 +564,17 @@ public class NeuralNetwork
             //we prepare a backpropagation
             BackProp(desired[i]);
             //now we calculate and change biases and weights
-
-            iterations = Enumerable.Range(0, _nLayers);
-            var pquery = from num in iterations.AsParallel() select num;
-            pquery.ForAll((iLayer) =>adjustWeightsAndBiases(iLayer, l, this._learningRate));
         }
+
+        iterations = Enumerable.Range(0, _nLayers);
+        var pquery = from num in iterations.AsParallel() select num;
+        pquery.ForAll((iLayer) =>adjustWeightsAndBiasesSGD(iLayer, l, this._learningRate, lambdaRegParam));
+    
+        for(Int32 i = 0; i < _nLayers; i ++)
+            weightsSquareSum+= _layers[i].sumSqaresWeights;
+
+        return weightsSquareSum;
+
     }
 }
 
