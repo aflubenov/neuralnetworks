@@ -177,7 +177,7 @@ public static class numpy {
         return ret;
     }
     static public double[][] add(double[][] a, double[][] b){
-        Int32 la = a.Length, lb = b.Length;
+        Int32 la = a.Length, lb = a[0].Length;
         double[][] aRet = new double[la][];
         
 
