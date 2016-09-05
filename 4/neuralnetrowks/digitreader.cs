@@ -173,23 +173,24 @@ public class inicio
                 Console.Write("{0}", digit[i*28+j] > 0?"*":" ");
         }
 
-         Console.Write("\n");
+      /*   Console.Write("\n");
           Console.Write("\n");
         for(Int32 i = 0; i < 28; i ++){
             if(i % 4 == 0) Console.Write("\n");
             Console.Write(result[i] >=0.5?"*":" ");
         }
+        numb = guessDigit(result);        
 
+*/
         max = -1.0;
 
-/*        for(Int32 i = 0; i < result.Length; i++)
+        for(Int32 i = 0; i < result.Length; i++)
             if(result[i] > max){
                 max = result[i];
                 numb = i;
             }
-        */
-        numb = guessDigit(result);        
-
+        
+        
         digitsReaded +=1.0;
         if(numb == tmp) digitsMached += 1.0;
 

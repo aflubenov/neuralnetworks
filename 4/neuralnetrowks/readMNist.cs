@@ -62,6 +62,26 @@ using System.IO;
             return aRet;
         }
 
+        public void advanceTo(Int32 position){
+            double[] tmp;
+            Int32 iTmp = 0;
+            for(Int32 i = 0; i < position; i ++)
+                this.GiveNextValue(out tmp, ref iTmp);
+        }
+
+        public void GiveNextValueAbsolute(out double[] pixels, ref Int32 lbl){
+                pixels = new double[28*28];
+                for (int i = 0; i < 28*28; ++i)
+                    {
+                        byte b = brImages.ReadByte();
+                        pixels[i] = b > 5?1:0;
+                        
+                    }
+
+                     lbl = brLabels.ReadByte();
+                return;
+        }
+
         public void GiveNextValue(out double[] pixels, ref Int32 lbl){
                 pixels = new double[28*28];
                 for (int i = 0; i < 28*28; ++i)
@@ -89,12 +109,16 @@ using System.IO;
         
         } // Main
 
-        ~readMNist(){
-
+        public void closeAll(){
             ifsImages.Close();
             brImages.Close();
             ifsLabels.Close();
             brLabels.Close();
+        }
+
+        ~readMNist(){
+
+            this.closeAll();
 
         }
     } // Program
