@@ -1,19 +1,24 @@
 using System;
 
+public interface ICost{
+    double cost(double[][] desired, double[][] inputs, NeuralNetwork n);
+    double cost(double[][] desired, double[][] activations);
+    double delta(double desired, double activation, double zPrime);
+}
 
-public class Quadratic{
+public class Quadratic: ICost{
 
-    public static double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
+    public double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
         Int32 i = 0, l = inputs.Length;
         double[][] activations = new double[l][];
 
         for(i = 0; i < l; i ++)
             activations[i] = n.Feedfordward(inputs[i]);
 
-        return CrossEntropy.cost(desired, activations);
+        return this.cost(desired, activations);
     }
 
-    public static double cost(double[][] desired, double[][] activations){
+    public double cost(double[][] desired, double[][] activations){
         Int32 i = 0, li = activations.Length;
         double acumSum = 0.0;
 
@@ -23,24 +28,24 @@ public class Quadratic{
         return (1.0/(2.0*(double)li))*acumSum;
     }
 
-    public static double delta(double desired, double activation, double zPrime){
+    public double delta(double desired, double activation, double zPrime){
         return (activation - desired)*zPrime;
     }
 }
 
-public class CrossEntropy{
+public class CrossEntropy:ICost{
 
-    public static double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
+    public double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
         Int32 i = 0, l = inputs.Length;
         double[][] activations = new double[l][];
 
         for(i = 0; i < l; i ++)
             activations[i] = n.Feedfordward(inputs[i]);
 
-        return CrossEntropy.cost(desired, activations);
+        return this.cost(desired, activations);
     }
 
-    public static double cost(double[][] desired, double[][] activations){
+    public double cost(double[][] desired, double[][] activations){
         Int32 i = 0, li = activations.Length, 
               j=0, lj = activations[0].Length;
         double acumSum = 0.0;
@@ -53,7 +58,8 @@ public class CrossEntropy{
         return (1.0/(double)li)*acumSum;
     }
 
-    public static double delta(double desired, double activation){
+    public double delta(double desired, double activation, double zPrime){
+        zPrime = zPrime+1;
         return activation - desired;
     }
 }

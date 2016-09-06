@@ -248,6 +248,7 @@ public class NeuronsLayer{
     public double sumSqaresWeights;
  
     public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons){
+        double tmp = 0;
         this.nInput = pnInputs;
         this.nNeurons = pnNeurons;
 
@@ -255,8 +256,9 @@ public class NeuronsLayer{
         this.weights = new double[pnNeurons][];
         this.tmp = new double[pnNeurons][];
         // this.nabla_w = new double[pnNeurons][];
+        tmp = 1.0/Math.Sqrt(pnNeurons);
         for (Int32 i = 0; i < pnNeurons; i ++){
-            this.weights[i] = numpy.randn1(pnInputs);
+            this.weights[i] = numpy.scalar(numpy.randn1(pnInputs), tmp);
             this.tmp[i] = new double[1] { 0 };
             // this.nabla_w[i] = new double[pnInputs];
         }
@@ -431,10 +433,12 @@ public class NeuralNetwork
 
         l = current.nNeurons;
         for(i = 0; i < l; i ++)
-            delta[i] = Quadratic.delta(desiredValues[i], current.activation[i], current.z_prime[i]); //*current.z_prime[i];
+            delta[i] = this.Cost.delta(desiredValues[i], current.activation[i], current.z_prime[i]); //, current.z_prime[i]);
             
         current.nabla_b = delta;
+        current.nabla_b_tmp = numpy.add(current.nabla_b, current.nabla_b_tmp);
         current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
+        current.nabla_w_tmp = numpy.add(current.nabla_w_tmp, current.nabla_w);
 
         //and we work on every previous layer by using the weights of the next layer
 
@@ -500,19 +504,6 @@ public class NeuralNetwork
         //Console.WriteLine(texto.ToString());
     }
 
-    //TODO
-    public void pseudoTrain(double[] inputs, double[] desired)
-    {
-        //we do a feedforward
-        Feedfordward(inputs);
-        //then calculate some "nablas" for weights and biases
-        BackProp(desired);
-
-        //now we adjust weights and biases
-
-
-
-    }
 
     private void cleanNablaTmp(){
         var iterations = Enumerable.Range(0, _nLayers);
@@ -535,7 +526,7 @@ public class NeuralNetwork
 
             for (Int32 j = 0; j < current.nInput; j++)
             {
-                current.weights[i][j] -= //(1.0 - ((pLearningRate*lambdaRegParam)/totalSamples))* current.weights[i][j] - 
+                current.weights[i][j] = (1.0 - ((pLearningRate*lambdaRegParam)/totalSamples))* current.weights[i][j] - 
                                                 ((pLearningRate / pSamplesNumber) * current.nabla_w_tmp[i][j]);
                 sqareWeightsTmp[i]+= (current.weights[i][j]*current.weights[i][j]);
             }
@@ -546,6 +537,12 @@ public class NeuralNetwork
             current.sumSqaresWeights+=sqareWeightsTmp[i];
 
     }
+
+    public ICost Cost;
+    public void SetCostFunction(ICost p){
+        this.Cost = p;
+    }
+    
 
     //we train a set of data, we acumulate the nablas and then we
     //adjust weights and biases by using Stocastic Gradient descent
