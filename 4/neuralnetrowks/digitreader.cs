@@ -172,8 +172,8 @@ public class inicio
             for(Int32 j = 0; j < 28; j ++)
                 Console.Write("{0}", digit[i*28+j] > 0?"*":" ");
         }
-
-      /*   Console.Write("\n");
+/*
+         Console.Write("\n");
           Console.Write("\n");
         for(Int32 i = 0; i < 28; i ++){
             if(i % 4 == 0) Console.Write("\n");
@@ -190,7 +190,7 @@ public class inicio
                 numb = i;
             }
         
-        
+       
         digitsReaded +=1.0;
         if(numb == tmp) digitsMached += 1.0;
 

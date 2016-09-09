@@ -4,9 +4,14 @@ public interface ICost{
     double cost(double[][] desired, double[][] inputs, NeuralNetwork n);
     double cost(double[][] desired, double[][] activations);
     double delta(double desired, double activation, double zPrime);
+    string getName();
 }
 
 public class Quadratic: ICost{
+
+    public string getName(){
+        return "Quadratic";
+    }
 
     public double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
         Int32 i = 0, l = inputs.Length;
@@ -35,6 +40,10 @@ public class Quadratic: ICost{
 
 public class CrossEntropy:ICost{
 
+    public string getName(){
+        return "Cross Entropy";
+    }
+
     public double cost(double[][] desired, double[][] inputs, NeuralNetwork n){
         Int32 i = 0, l = inputs.Length;
         double[][] activations = new double[l][];
@@ -60,6 +69,6 @@ public class CrossEntropy:ICost{
 
     public double delta(double desired, double activation, double zPrime){
         zPrime = zPrime+1;
-        return activation - desired;
+        return activation - desired ;
     }
 }

@@ -66,7 +66,8 @@ public class inicio
     }
 
     public static bool pseudoTrainSetByEpocs(ref double[][] inputs, ref double[][] desired, NeuralNetwork n, 
-                                Int32 epocs, string fileName, double lambdaRegParam, Int32 totalSamples, Int32 miniBatchSize)
+                                Int32 epocs, string fileName, double lambdaRegParam, Int32 totalSamples, 
+                                Int32 miniBatchSize, double learningRate)
     {
         Int32[][] indexes = new Int32[totalSamples][];
         Int32 i = 0;
@@ -76,6 +77,8 @@ public class inicio
         Int32 miniBatches = ((Int32)totalSamples) / miniBatchSize;
         Int32 miniBatchesI;
         double minMatches = 0, tmpMatches = 0;
+        Int32 linePosition = 10;
+        double tmpCost;
         //we set this to suffle indexes
         for(i = 0; i < totalSamples; i ++)
             indexes[i] = new Int32[1]{i};
@@ -84,7 +87,7 @@ public class inicio
 
 
         //now we are to train by epocs
-        writeLog(fileName, String.Format("\"id\",\"epocs\", \"MiniBatch_Id\",\"test_matches\",\"test_cases\", \"lambda_Reg_\", \"Cost\""));
+        writeLog(fileName, String.Format("\"id\",\"epocs\", \"MiniBatch_Id\",\"test_matches\",\"test_cases\", \"lambda_Reg_\", \"Cost\",\"Cost_Function_Name\",\"Learning Rate\",\"Total Samples\""));
 
         for(epocsI = 0; epocsI < epocs; epocsI ++){
             //suffling inputs
@@ -103,14 +106,17 @@ public class inicio
                 if(Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                     return false;
 
-                Console.SetCursorPosition(0,10); //,miniBatchSize+10);        
-                Console.WriteLine("Training minibatch {2} of {3} ON Epoc # {0} of {1})....",epocsI, epocs, miniBatchesI,  miniBatches);   
+                Console.SetCursorPosition(0,linePosition); //,miniBatchSize+10);        
+                Console.Write("Training minibatch {2} of {3} ON Epoc # {0} of {1})....                                       ",epocsI, epocs, miniBatchesI,  miniBatches);   
             }
 
             tmpMatches = testNetwork(n, 100);
-            writeLog(fileName, String.Format("{0},{1},{2},{3:N2},{4},{5},{6}", epocsI, epocs, miniBatchesI, tmpMatches, 
-                                            100, lambdaRegParam, n.Cost.cost(aDesired, aInputs, n)));
-
+            tmpCost = n.Cost.cost(aDesired, aInputs, n);
+            writeLog(fileName, String.Format("{0},{1},{2},{3:N2},{4},{5},{6},\"{7}\",{8},{9}", epocsI, epocs, miniBatchesI, tmpMatches, 
+                                            100, lambdaRegParam, tmpCost, n.Cost.getName(), learningRate, totalSamples));
+            Console.SetCursorPosition(0,linePosition++);
+            Console.WriteLine("Trained Epoc {0}, COST: {1:N3}, Accuracy: {2:N2}", epocsI, tmpCost, tmpMatches);
+            
             n.saveToFile(fileName);
             if(tmpMatches >= minMatches ){
                 minMatches = tmpMatches;
@@ -120,6 +126,33 @@ public class inicio
         }
         return true;
     }
+
+
+ private static Int32 guessDigit(double[] digit){
+
+     double[] digitMatrix;
+        //normaliza
+        for(Int32 i = 0; i < 28; i ++)
+            digit[i] = digit[i]>=0.5?1:0;
+
+        Int32 number=-1;
+        Int32 max=-1;
+        Int32 counter = 0;
+        for(Int32 i = 0; i < 10; i ++){
+            counter = 0;
+            digitMatrix = getDigits(i);
+            for(Int32 j = 0; j < 28; j++)
+                counter = counter + (digit[j]==digitMatrix[j]?1:0);
+            if(counter > max){
+                max = counter;
+                number = i;
+            }
+        }
+
+        return number;
+
+    }
+
 
     private static double[] getDigits(Int32 i){
         double[][] aRet = new double[10][];
@@ -218,7 +251,7 @@ public class inicio
 
 
     private static void recognizeDigits(string fileName, Int32 miniBatchSize, Int32 epocs, double lambdaRegParam, 
-                                        Int32 totalSamples)
+                                        Int32 totalSamples, double learningRate, string costFunction)
     {
         NeuralNetwork myNet;
         readMNist digits = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
@@ -228,13 +261,28 @@ public class inicio
         Int32 tmp = 0;
 
         if(fileName.Length == 0 || (!File.Exists(fileName)))
-            myNet = new NeuralNetwork( 784, 128, 64, 32, 16, 10 );
+            myNet = new NeuralNetwork( 784, 150,  10);
         else 
             myNet = NeuralNetwork.getFromFile(fileName);
 
-        myNet.SetCostFunction(new CrossEntropy());
-        //myNet.SetCostFunction(new Quadratic());
 
+        myNet.LearningRate = learningRate;
+
+        switch (costFunction)
+        {
+            case "C":
+            case "c":
+                myNet.SetCostFunction(new CrossEntropy());
+        
+                break;
+            case "Q":
+            case "q":
+                 myNet.SetCostFunction(new Quadratic());
+                 break;
+            
+
+        }
+        
         Console.Clear();
 
         //we get one sample 
@@ -245,7 +293,7 @@ public class inicio
             desired[i][tmp]=1;
         }
 
-        pseudoTrainSetByEpocs(ref tryiningData, ref desired, myNet, epocs, fileName, lambdaRegParam, totalSamples, miniBatchSize);
+        pseudoTrainSetByEpocs(ref tryiningData, ref desired, myNet, epocs, fileName, lambdaRegParam, totalSamples, miniBatchSize, learningRate);
     
 
     }
@@ -269,7 +317,8 @@ public class inicio
                     max = result[i];
                     numb = i;
                 }
-                
+
+//            numb = guessDigit(result);
             if(numb == tmp) digitsMached += 1;
         }
 
@@ -299,12 +348,12 @@ public class inicio
        // readMNist a = new readMNist("train-labels.idx1-ubyte", "train-images.idx3-ubyte");
         
         //param names: samples, epocs
-        if(args.Length < 5){
-            Console.WriteLine("\n\n=================\n Please use xxxxx.exe [file To Save] [MiniBatch size] [epocs] [lambda Reg.Param] [total Samples] \n=========\n");
+        if(args.Length < 7){
+            Console.WriteLine("\n\n=================\n Please use xxxxx.exe [file To Save] [MiniBatch size] [epocs] [lambda Reg.Param] [total Samples] [learning Rate] [Quad or Cross] \n=========\n");
             return;
         }
         recognizeDigits(args[0], Int32.Parse(args[1]), Int32.Parse(args[2]), double.Parse(args[3]), 
-                    Int32.Parse(args[4]) );
+                    Int32.Parse(args[4]), double.Parse(args[5]), args[6] );
 
     }
 }

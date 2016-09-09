@@ -294,6 +294,11 @@ public class NeuralNetwork
     private NeuronsLayer[] _layers; //first one is the first hidden layer, last one is the output layer 
     private double _learningRate = 0.5;
 
+    public double LearningRate{
+        get { return _learningRate;}
+        set { _learningRate = value;}
+    }
+
     static public NeuralNetwork getFromFile(string fileName){
         BinaryReader oReader = new BinaryReader(File.Open(fileName,FileMode.Open));
         Int32 inputs;
