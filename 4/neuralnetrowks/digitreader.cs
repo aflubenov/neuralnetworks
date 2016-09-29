@@ -25,8 +25,8 @@ public class inicio
         for(Int32 i = 0; i < 28; i ++){
             Console.Write("\n");
             for(Int32 j= 0; j < 28; j++){
-                aRet[28*i+j] =255.0 - image.GetPixel(j,i).R;
-                Console.Write("{0} ",aRet[28*i+j] > 50?"*":" ");
+                aRet[28*i+j] = image.GetPixel(j,i).R;
+               // Console.Write("{0} ",aRet[28*i+j] > 50?"*":" ");
             }
         }
         
@@ -159,12 +159,12 @@ public class inicio
         Int32 tmp = 0;
         double digitsReaded = 0.0, digitsMached = 0.0;
 
-        //digit = imgToDouble(digitImageBitmap);
+        digit = imgToDouble(digitImageBitmap);
      
         myNet = NeuralNetwork.getFromFile(fileName); // new NeuralNetwork( 784, 15, 10 );
 
-        for(;;){    
-       digits.GiveNextValue(out digit, ref tmp);
+      //  for(;;){    
+      // digits.GiveNextValue(out digit, ref tmp);
         result = myNet.Feedfordward(digit);
         
         for(Int32 i = 0; i < 28; i ++){
@@ -198,7 +198,7 @@ public class inicio
 
         Console.WriteLine("\n");
         Console.ReadLine();
-    }
+    //}
     }
 
 
@@ -211,7 +211,7 @@ public class inicio
 
         //recognizeOneLetter();
 
-        recognizeDigits("recognizeHandWritedDigits.bin", "x.x"); // args[0]);
+        recognizeDigits("recognizeHandWritedDigits.bin",  args[0]);
 
     }
 }
