@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using System.Linq;
+
 public static class numpy {
 	static Random rand = new Random(); //reuse this if you are generating many
 

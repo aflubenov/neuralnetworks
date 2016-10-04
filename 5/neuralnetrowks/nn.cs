@@ -18,8 +18,8 @@ struct struNeuron
 
 public interface IActivationClass
 {
-    public double ActivationFunction(double value);
-    public double ActivationDerivative(double value);
+    double ActivationFunction(double value);
+    double ActivationDerivative(double value);
 }
 
 public class Sigmoid:IActivationClass {
@@ -27,133 +27,11 @@ public class Sigmoid:IActivationClass {
         return 1.0 / (1.0 + Math.Exp(-z));
     }
 
-    private double ActivationDerivative(double s)
+    public double ActivationDerivative(double s)
     {
         return s * (1 - s);
     }
 }
-
-
-
-
-public class NeuronsLayer{
-    public Int32 nInput = 0;
-    public Int32 nNeurons = 0;
-    public double[][] inputs = new double[1][]; //1 x number of inputs
-    public double[][] weights; //number of neurons x number of inputs
-    public double[] biases; //number of neurons 
-    public double[][] tmp; //number of neurons x 0
-    public double[] z; 
-    public double[] activation; //number of neurons
-    //-------- helper
-    public double[] z_prime; //number of neurons
-    public double[][] nabla_w; //number of neurons x number of
-    public double[][] nabla_w_tmp;
-
-    public double[] nabla_b; //number of neurons
-    public double[] nabla_b_tmp;
-    public double sumSqaresWeights;
-
-    protected IActivationClass activationClass; 
- 
-    public NeuronsLayer(Int32 pnInputs, Int32 pnNeurons, IActivationClass pAC){
-        double tmp = 0;
-        this.nInput = pnInputs;
-        this.nNeurons = pnNeurons;
-
-        this.activationClass = pAC;
-
-        this.inputs[0] = new double[pnInputs];
-        
-        this.weights = new double[pnNeurons][];
-        this.tmp = new double[pnNeurons][];
-        
-        tmp = 1.0/Math.Sqrt(pnNeurons);
-        for (Int32 i = 0; i < pnNeurons; i ++){
-            this.weights[i] = numpy.scalar(numpy.randn1(pnInputs), tmp);
-            this.tmp[i] = new double[1] { 0 };
-        }
-
-        this.biases = numpy.randn1(pnNeurons);
-        this.nabla_b = new double[pnNeurons];
-        this.z = new double[pnNeurons];
-        this.activation = new double[pnNeurons];
-        this.z_prime = new double[pnNeurons];
-    }
-
-
-    public void cleanNablaTmp(){
-        nabla_b_tmp = new double[nNeurons];
-        for(Int32 i = 0; i < nNeurons; i ++)
-            nabla_b_tmp[i] = 0;
-
-        nabla_w_tmp = new double[nNeurons][];
-        for(Int32 i = 0; i < nNeurons; i ++){
-            nabla_w_tmp[i] = new double[nInput];
-            for(Int32 j = 0; j < nInput; j++)
-                nabla_w_tmp[i][j]=0;
-        }
-
-
-    }
-
-    public double[] activate(){
-        
-        var iterations = Enumerable.Range(0, this.nNeurons);
-        var pquery = from num in iterations.AsParallel() select num;
-
-        numpy.matrixMult_T1(this.inputs, this.weights, ref this.tmp);
-        pquery.ForAll((e)=>{ this.z[e]=this.tmp[e][0] + this.biases[e];
-                             this.activation[e] = this.activationClass.ActivationFunction(this.z[e]); 
-                             this.z_prime[e] = this.activationClass.ActivationDerivative(this.activation[e]); 
-                             });
-        return this.activation;  
-    }
-}
-
-public class FeatureMapLayer:NeuronsLayer {
-
-    private Int32 strideLength;
-    private Int32 inputW, inputH;
-    private Int32 recField_edgeSize;
-
-    public FeatureMapLayer(Int32 pInputW, Int32 pInputH, IActivationClass pAC, Int32 pStrideLength, Int32 pRecField_edge_size)
-        double tmp = 0;
-        
-        
-        this.nInput = pInputH * pInputW;
-        this.nNeurons = (pInputW-pRecField_edge_size+1)*(pInputH-pRecField_edge_size+1);
-        this.inputW = pInputW;
-        this.inputH = pInputH;
-        this.strideLength = pStrideLength;
-        this.recField_edgeSize = pRecField_edge_size;
-
-        this.inputs[0] = new double[this.nInput];
-
-        //we have just as many weights as inputs are in the receptive field
-        this.weights = new double[1][];
-        this.tmp = new double[1][];
-        tmp = 1.0/Math.Sqrt(this.nNeurons);        
-        this.weights[0] = numpy.scalar(numpy.randn1(pRecField_edge_size*pRecField_edge_size), tmp);
-
-        //we have just ONE bias
-        this.biases = numpy.randn1(1);
-        this.nabla_b = new double[1];
-
-        //we have as many activations as neurons. 
-        this.z = new double[this.nNeurons];
-        this.activation = new double[this.nNeurons];
-        this.z_prime = new double[this.nNeurons];
-
-        this.activationClass = pAC;
-    }
-
-    public double[] activate(){
-
-    }
-}
-
-
 
 
 
@@ -267,7 +145,7 @@ public class NeuralNetwork
 
 
         for(Int32 i = 0; i < _nLayers; i ++)
-            _layers[i] = new NeuronsLayer(IHlO[i],IHlO[i+1]);
+            _layers[i] = new NeuronsLayer(IHlO[i],IHlO[i+1], new Sigmoid());
 
     }
 
@@ -275,11 +153,11 @@ public class NeuralNetwork
     public double[] Feedfordward(double[] inputs)
     {
 
-        _layers[0].inputs[0]=inputs;
-        activateLayer(0);
+        _layers[0].setInputs(inputs);
+        _layers[0].activate();
 
         for (Int32 i = 1; i < _nLayers; i++){
-            _layers[i].inputs[0]=_layers[i-1].activation;
+            _layers[i].setInputs(_layers[i-1].activation);
             _layers[i].activate();
         }
         return Activation;
@@ -288,29 +166,15 @@ public class NeuralNetwork
     public void BackProp(double[] desiredValues)
     {
         
-        Int32 i, l;
+        Int32 i;
         NeuronsLayer current = _layers[_nLayers-1]; // we start with the last layer
-        double[] delta = new double[current.nNeurons];
+        double[] delta;
 
-        l = current.nNeurons;
-        for(i = 0; i < l; i ++)
-            delta[i] = this.Cost.delta(desiredValues[i], current.activation[i], current.z_prime[i]); //, current.z_prime[i]);
-            
-        current.nabla_b = delta;
-        current.nabla_b_tmp = numpy.add(current.nabla_b, current.nabla_b_tmp);
-        current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
-        current.nabla_w_tmp = numpy.add(current.nabla_w_tmp, current.nabla_w);
-
+        delta = current.BackProp(desiredValues, this.Cost);
         //and we work on every previous layer by using the weights of the next layer
 
-        for(i = _nLayers-2; i >=0; i--){
-            current = _layers[i];
-            delta =numpy.hadamart(numpy.matrixMult(_layers[i+1].weights, delta)[0], current.z_prime);
-            current.nabla_b = delta;
-            current.nabla_b_tmp = numpy.add(current.nabla_b, current.nabla_b_tmp); //we populate temporal arrays by adding for later calculus
-            current.nabla_w = numpy.matrixMult(current.inputs[0], delta);
-            current.nabla_w_tmp = numpy.add(current.nabla_w_tmp, current.nabla_w); //we populate temporal arrays by adding for later calculus
-        }
+        for(i = _nLayers-2; i >=0; i--)
+            delta = _layers[i].BackProp(null, this.Cost, delta, _layers[i+1]);
 
     }
 
