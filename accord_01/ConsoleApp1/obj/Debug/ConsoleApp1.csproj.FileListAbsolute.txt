@@ -1,0 +1,90 @@
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\ConsoleApp1.exe.config
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\ConsoleApp1.exe
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\ConsoleApp1.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.MachineLearning.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.Core.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Statistics.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.MachineLearning.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.MachineLearning.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.Core.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Math.Core.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Statistics.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Statistics.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.dll.config
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\obj\Debug\ConsoleApp1.csprojResolveAssemblyReference.cache
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\obj\Debug\ConsoleApp1.exe
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\obj\Debug\ConsoleApp1.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\ZedGraph.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Video.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Imaging.dll
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\ZedGraph.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Video.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Video.xml
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Imaging.pdb
+c:\users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Imaging.xml
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.IO.dll
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Neuro.dll
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Genetic.dll
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.IO.pdb
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.IO.xml
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Neuro.pdb
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Neuro.xml
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Genetic.pdb
+C:\Users\alubenov\documents\visual studio 2017\Projects\ConsoleApp1\ConsoleApp1\bin\Debug\Accord.Genetic.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\ConsoleApp1.exe.config
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\ConsoleApp1.exe
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\ConsoleApp1.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.IO.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.MachineLearning.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.Core.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Neuro.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Statistics.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\ZedGraph.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Video.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Imaging.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Genetic.dll
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.dll.config
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Controls.Imaging.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.IO.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.IO.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.MachineLearning.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.MachineLearning.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.Core.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Math.Core.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Neuro.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Neuro.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Statistics.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Statistics.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\ZedGraph.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Video.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Video.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Imaging.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Imaging.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Genetic.pdb
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\bin\Debug\Accord.Genetic.xml
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\obj\Debug\ConsoleApp1.csprojResolveAssemblyReference.cache
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\obj\Debug\ConsoleApp1.exe
+C:\Users\alubenov\Documents\mine\neuralnetworks\accord_01\ConsoleApp1\obj\Debug\ConsoleApp1.pdb

@@ -19,7 +19,7 @@ public abstract class NNLayer{
     public double[] activation; //number of neurons
     //-------- helper
     public double[] z_prime; //number of neurons
-    public double[][] nabla_w; //number of neurons x number of
+    public double[][] nabla_w; //number of neurons x number of inputs
     public double[][] nabla_w_tmp;
 
     public double[] nabla_b; //number of neurons
@@ -46,6 +46,7 @@ public abstract class NNLayer{
 
     public abstract double[] activate();
     public abstract void setInputs(double[] p);
+    public abstract double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null );
 }
 
 public class NeuronsLayer:NNLayer{
@@ -80,7 +81,7 @@ public class NeuronsLayer:NNLayer{
     }
 
 
-    public double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null )
+    public override double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null )
     {
         
         Int32 i;
@@ -220,6 +221,30 @@ public class FeatureMapLayer:NNLayer {
 
         return this.activation;
     }
+
+    public override double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null )
+    {
+        
+        Int32 i;
+
+        if(delta == null){
+            throw new Exception("we are not expecting a feature map layer be the last one :-( ... yet");
+            //
+            //            delta = new double[this.nNeurons];
+            //            for(i = 0; i < this.nNeurons; i ++)
+            //                delta[i] = Cost.delta(desiredValues[i], this.activation[i], this.z_prime[i]);
+        } else  {
+            delta = numpy.hadamart(numpy.matrixMult(nextLayer.weights, delta)[0], this.z_prime); 
+        }
+        this.nabla_b = delta;
+        this.nabla_b_tmp = numpy.add(this.nabla_b, this.nabla_b_tmp); //we populate temporal arrays by adding for later calculus
+        this.nabla_w = numpy.matrixMult(this.inputs[0], delta);
+        this.nabla_w_tmp = numpy.add(this.nabla_w_tmp, this.nabla_w); //we populate temporal arrays by adding for later calculus
+
+        //and we work on every previous layer by using the weights of the next layer
+
+        return delta;
+    }
 }
 
 public class PoolingLayer:FeatureMapLayer {
@@ -269,6 +294,13 @@ public class PoolingLayer:FeatureMapLayer {
 
         return this.activation;
     }
+
+    public override double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null ){
+        
+        //pooling layers should not have backpropagation :-) 
+        return null;
+    }
+    
 }
 
 public class ConvolutionLayer:NNLayer {
@@ -313,4 +345,54 @@ public class ConvolutionLayer:NNLayer {
         return this.activation;
         
     }
+
+    public override double[] BackProp(double[] desiredValues, ICost Cost, double[] delta = null, NNLayer nextLayer = null )
+    {
+
+        //backpropagating on a convolutional layer mean: 
+        // 0.- "delta" always has as many values as NEURONS in the NEXT LAYER
+        // 0.5 - the NEW 'delta' calculation will have as many values as NEURONS WE HAVE NOW
+        // 1.- weights in the next layer are as many weights as the sum of all the outputs in pooling layer
+        // 2.- since output is an array with the activation of all the pooling layers sortened, what
+        //      we have in the new delta is a sortened array of every activation of all the pooling layers. 
+        // 3.- we can SPLIT the delta into as many arrays as pooling layers (mini deltas),
+        // 4.- every activation's value of one pooling layer IS A VALUE OF ITS FEATURE MAP LAYER (unless with the pooling layer we are using now that doesn't change values)
+        // 5.- so (by the monent) we can ignore the pooling layer and sum every value of each mini-delta simulating that we did "as many iterations as receptive fields we have")   
+        // 6.- What happen if the "next layer" is a convolution layer???? WE DON'T KNOW!!!!, by the moment we won't use 2 convolution layers :'( 
+
+        Int32 i, j;
+        double[][] deltas;
+
+        if(delta == null){
+            throw new Exception("we are not expecting a CONVOLUTION layer be the last one :-( ... yet");
+//
+//            delta = new double[this.nNeurons];
+//            for(i = 0; i < this.nNeurons; i ++)
+//                delta[i] = Cost.delta(desiredValues[i], this.activation[i], this.z_prime[i]);
+        } else  {
+            /////////////////////////delta = numpy.hadamart(numpy.matrixMult(nextLayer.weights, delta)[0], this.z_prime);
+            
+            delta = numpy.matrixMult(nextLayer.weights, delta)[0]; //in further steps we have to hadamart by z_prime. 
+
+            //we should split the "delta" in as many as pooling layers we have. 
+            deltas = new double[_nLayers][]; //an array of _nLayers * sizeof(output of pooling layer)
+            for(i = 0; i < _nLayers; i ++) {
+                deltas[i] = new double[this._pl[i].nNeurons];
+
+                for(j = 0; j < this._pl[i].nNeurons; j ++)
+                    deltas[i][j] = delta[i*this._pl[i].nNeurons+j];
+            }
+                
+        }
+        this.nabla_b = delta;
+        this.nabla_b_tmp = numpy.add(this.nabla_b, this.nabla_b_tmp); //we populate temporal arrays by adding for later calculus
+        this.nabla_w = numpy.matrixMult(this.inputs[0], delta);
+        this.nabla_w_tmp = numpy.add(this.nabla_w_tmp, this.nabla_w); //we populate temporal arrays by adding for later calculus
+
+        //and we work on every previous layer by using the weights of the next layer
+
+        return delta;
+    }
+
+    
 }
