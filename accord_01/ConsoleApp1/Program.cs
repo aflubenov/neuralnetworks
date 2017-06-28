@@ -193,7 +193,7 @@ namespace ConsoleApp1
             List<myType[]> lNewResult = new List<myType[]>(outArrayResult);
             List<myType[]> lRetResult = new List<myType[]>();
 
-            Random r = new Random();
+            Random r = new Random(System.DateTime.Now.Millisecond);
             myType[] tmp;
             Int32 iTmp;
 
@@ -223,7 +223,7 @@ namespace ConsoleApp1
             List<myType> lNewResult = new List<myType>(outArrayResult);
             List<myType> lRetResult = new List<myType>();
 
-            Random r = new Random();
+            Random r = new Random(System.DateTime.Now.Millisecond);
             myType[] tmp;
             myType tmp2;
             Int32 iTmp;
@@ -271,7 +271,7 @@ namespace ConsoleApp1
             {
                 // Compute one learning iteration
                 iteracion++;
-                data = shuffle<double>(data, ref resultados);
+              //  data = shuffle<double>(data, ref resultados);
 
                 totalError = 0.0;
                 for (Int32 i = 0; i < minibatches; i++)
@@ -309,7 +309,7 @@ namespace ConsoleApp1
             double[][] entrenamientoRuedas, testRuedas;
             double[][] entrenamientoResults, testResults;
 
-            cargarDatosYResultados(out datasetRuedas, out datasetResultadosMonodimensional, out etiquetasFechas,  cantRuedas, "ggal",215);
+            cargarDatosYResultados(out datasetRuedas, out datasetResultadosMonodimensional, out etiquetasFechas,  cantRuedas, "ggal",250);
 
             datasetRuedas = shuffle<double>(datasetRuedas, ref datasetResultadosMonodimensional);
 
@@ -354,25 +354,25 @@ namespace ConsoleApp1
                 network = (ActivationNetwork)ActivationNetwork.Load("nn.bin");
             else
             {
-                network = new ActivationNetwork(activationFunction, inputsCount: entrenamientoRuedas[0].Length, neuronsCount: new[] {8, 3 //la salida
+                network = new ActivationNetwork(activationFunction, inputsCount: entrenamientoRuedas[0].Length, neuronsCount: new[] {30, 3 //la salida
                                                                                                                                     });
                 network.Randomize();
             }
-            
+
             // Create a Levenberg-Marquardt algorithm
-           /* var teacher = new Accord.Neuro.Learning.ParallelResilientBackpropagationLearning(network)
-            {
+            var teacher = new Accord.Neuro.Learning.ParallelResilientBackpropagationLearning(network);
+            /*{
                 DecreaseFactor= 0.1,
                 IncreaseFactor = 5
                 
-            }*/
+            }
 
             var teacher = new Accord.Neuro.Learning.BackPropagationLearning(network)
             {
                
-               LearningRate = 0.0000001,
+               LearningRate = 0.01,
                Momentum = 0
-            }
+            }*/
             ;
 
       
@@ -380,7 +380,7 @@ namespace ConsoleApp1
             writeLog("Iteracion, error", "log.csv");
 
             
-            Train(teacher, entrenamientoRuedas.Length / 5, 10, 50000, 0.05, entrenamientoRuedas, entrenamientoResults);
+            Train(teacher, entrenamientoRuedas.Length / 5, 10, 5000, 0.05, entrenamientoRuedas, entrenamientoResults);
        
 
             network.Save("nn.bin");
